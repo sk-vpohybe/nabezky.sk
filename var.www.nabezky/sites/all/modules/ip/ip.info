@@ -1,0 +1,10 @@
+name = IP address manager
+description = Manage user IP addresses.
+package = Other
+core = 6.x
+; Information added by drupal.org packaging script on 2011-08-21
+version = "6.x-1.1"
+core = "6.x"
+project = "ip"
+datestamp = "1313903817"
+

@@ -1,0 +1,16 @@
+name = Ubercart Addresses
+description = "Allows users to manage a set of addresses that can be referenced when placing an order."
+dependencies[] = uc_store
+dependencies[] = ctools
+dependencies[] = token
+package = "Ubercart - extra"
+core = 6.x
+php = 5.2
+
+
+; Information added by drupal.org packaging script on 2012-11-10
+version = "6.x-2.0-alpha2+1-dev"
+core = "6.x"
+project = "uc_addresses"
+datestamp = "1352554773"
+

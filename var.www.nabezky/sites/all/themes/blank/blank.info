@@ -1,0 +1,7 @@
+; $Id $
+name = Blank
+description = A blank theme for embedding
+version = VERSION
+core = 6.x
+engine = phptemplate
+stylesheets[all][] = blank.css

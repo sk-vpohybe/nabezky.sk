@@ -1,0 +1,77 @@
+<?php
+
+/*
+ * Calculate newly added 'boundary' data set for existing tracks.
+ */
+
+function trackfield_csv_update_6000(&$sandbox) {
+  if (!isset($sandbox['current_row'])) {
+    /* Setup queue */
+    $sandbox['current_row'] = 0;
+   
+    $sql = <<<EOF
+SELECT td1.nid, td1.vid
+FROM trackfield_datasets td1
+WHERE td1.settype = 'latitude'
+AND EXISTS (
+  SELECT 1
+  FROM trackfield_datasets td2
+  WHERE settype = 'longitude'
+  AND td2.nid = td1.nid
+  AND td2.vid = td1.vid
+  AND td2.field_name = td1.field_name
+  AND td2.delta = td1.delta
+)
+AND NOT EXISTS (
+  SELECT 1
+  FROM trackfield_datasets td3
+  WHERE settype = 'boundary'
+  AND td3.nid = td1.nid
+  AND td3.vid = td1.vid
+  AND td3.field_name = td1.field_name
+  AND td3.delta = td1.delta
+)
+EOF;
+
+    $queue = array();
+    $result = db_query($sql);
+    while ($row = db_fetch_object($result)) {
+      $queue[] = $row;
+    }
+    
+    if (count($queue) == 0) {
+      /* Nothing to do */
+      return array();
+    } else {    
+      $sandbox['queue'] = $queue;
+    }
+  }
+
+  $sql = <<<EOF
+SELECT td1.nid, td1.vid, td1.field_name, td1.delta, td1.setdata as latitude, td2.setdata as longitude
+FROM {trackfield_datasets} td1, {trackfield_datasets} td2
+WHERE td1.nid = td2.nid
+AND td1.vid = td2.vid
+AND td1.settype = 'latitude'
+AND td2.settype = 'longitude'
+AND td1.nid = %d
+AND td1.vid = %d
+EOF;
+
+  $this_row = $sandbox['queue'][$sandbox['current_row']++];
+  $result = db_query($sql, $this_row->nid, $this_row->vid);
+  while ($row = db_fetch_object($result)) {
+    $boundary = _trackfield_csv_get_boundary(split(',', $row->latitude), split(',', $row->longitude));
+    if (is_array($boundary)) {
+      db_query("INSERT INTO {trackfield_datasets} (nid, vid, field_name, delta, settype, setdata) VALUES (%d, %d, '%s', %d, '%s', '%s')",
+        $row->nid, $row->vid, $row->field_name, $row->delta, 'boundary',
+        join(',', $boundary));
+    }
+  }
+
+  $ret['#finished'] = $sandbox['current_row'] == count($sandbox['queue']) ? 1 : ($sandbox['current_row'] / count($sandbox['queue']));
+
+  return $ret;
+}
+
+?>

@@ -1,0 +1,1 @@
+<?php// $Id$/*** @file* Removes the "login/register" link from comments.**///invoke the link_alter hookfunction remove_login_comment_link_alter(&$links, $node, $comment = NULL){    if($comment){        unset($links['comment_forbidden']);    }}?>

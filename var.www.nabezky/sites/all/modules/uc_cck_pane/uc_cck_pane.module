@@ -1,0 +1,533 @@
+<?php
+
+/**
+ * @file uc_cck_pane.module
+ * 
+ * Ubercart CCK Checkout Panes.
+ * 
+ * @note Node data will be stored in database during checkout, even when order is not complete.
+ */
+
+/**
+ * Implementation of hook_theme().
+ */
+function uc_cck_pane_theme() {
+  $theme = array(
+    'uc_cck_pane_order_view' => array(
+      'arguments' => array('data' => NULL),
+    ),
+    'uc_cck_pane_checkout_view' => array(
+      'arguments' => array('form' => NULL),
+    ),
+  );
+  
+  return $theme;
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function uc_cck_pane_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'uc_cart_checkout_form') {
+    // Make sure the form supports files.
+    $form['#attributes']['enctype'] = 'multipart/form-data';
+    // Run additional validation
+    $form['#validate'][] = 'uc_cck_pane_node_validate';
+  }
+  
+  if ($form_id == 'node_type_form') {
+    // Add a config option to CCK nodes to enable them as checkout panes.
+    $form['uc_cck_pane'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Ubercart CCK Checkout Pane'),
+      '#group' => 'additional_settings',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#weight' => 30,
+    );
+
+    $form['uc_cck_pane']['uc_cck_pane_type'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Generate a checkout pane'),
+      '#description' => t('Allow this content type to be used as a Ubercart checkout pane.'),
+      '#default_value' => variable_get('uc_cck_pane_type_' . $form['#node_type']->type, FALSE),
+      //'#access' => user_access('administer store'),
+    );
+  }
+}
+
+/**
+ * Send the values of each CCK Pane through node validation.
+ */
+function uc_cck_pane_node_validate($form, &$form_state) {
+  // Make sure this is loaded if the form was rebuilt
+  module_load_include('inc', 'node', 'node.pages');
+  
+  // We don't want any additional handlers here
+  $form_state['submit_handlers'] = NULL;
+  
+  // Locate the CCK panes
+  $panes = $form_state['values']['panes'];
+  foreach ($panes as $paneid => $values) {
+    if (substr($paneid, 0, 9) == 'cck_type_') {
+      // Record what errors already existed at this stage
+      $old_errors = form_get_errors();
+      $old_errors = $old_errors ? $old_errors : array();
+      
+      // Validate node fields
+      $node_state = array();
+      $node_state['values'] = $values[0];
+      node_form_validate($form, $node_state);
+      
+      // Collect the errors after this pane was validated
+      $new_errors = form_get_errors();
+      $new_errors = $new_errors ? $new_errors : array();
+      
+      // Relocate field errors to the correct parent item
+      $pane_errors = array_diff($new_errors, $old_errors);
+      foreach ($pane_errors as $fieldid => $error) {
+        unset($new_errors[$fieldid]);
+        $new_errors['panes]['.$paneid.'][0]['.$fieldid] = $error;
+      }
+      
+      // Reset the errors
+      drupal_get_messages('error');
+      form_set_error(NULL, '', TRUE);
+      foreach ($new_errors as $fieldid => $error) {
+        form_set_error($fieldid, $error);
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of hook_node_type().
+ * Rename or delete the settings variable if a type changes.
+ */
+function uc_cck_pane_node_type($op, $info) {
+  switch ($op) {
+    case 'delete':
+      variable_del('uc_cck_pane_type_'. $info->type);
+      break;
+    case 'update':
+      if (!empty($info->old_type) && $info->old_type != $info->type) {
+        if (is_uc_cck_pane($info->old_type)) {
+          variable_del('uc_cck_pane_type_'. $info->old_type);
+          variable_set('uc_cck_pane_type_'. $info->type, 1);
+        }
+      }
+      break;
+  }
+}
+
+/**
+ * Check if a node should be selectable as a checkout pane.
+ */
+function uc_cck_pane_nodestatus($nid) {
+  $found = db_result(db_query("SELECT nid FROM {uc_cck_pane} WHERE nid = %d", $nid));
+  return $found ? TRUE : FALSE;
+}
+
+/**
+ * Implementation of hook_token_list().
+ */
+function uc_cck_pane_token_list($type = 'all') {
+  $tokens = array();
+  if ($type == 'order' || $type == 'ubercart' || $type == 'all') {
+    $types = uc_cck_pane_get_types('types');
+    foreach ($types as $type) {
+      $node_type = content_types($type->type);
+      
+      // Add title/body tokens
+      if ($node_type['has_title']) {
+        $tokens['order']['uc-cck-'.$type->type.'-title'] = $type->name.': '.$node_type['title_label'];
+      }
+      if ($node_type['has_body']) {
+        $tokens['order']['uc-cck-'.$type->type.'-body'] = $type->name.': '.$node_type['body_label'];
+      }
+      
+      // Add CCK field tokens
+      foreach ($node_type['fields'] as $fid => $field) {
+        $tokens['order']['uc-cck-'.$type->type.'-'.$fid] = $type->name.': '.$field['widget']['label'];
+      }
+    }
+  }
+  return $tokens;
+}
+
+/**
+ * Implementation of hook_token_values().
+ */
+function uc_cck_pane_token_values($type, $object = NULL) {
+  $values = array();
+  switch ($type) {
+    case 'order':
+      $types = uc_cck_pane_get_types('types');
+      foreach ($types as $type) {
+        // Get the nid for the node type in the current order
+        $nid = _uc_cck_pane_get_nid($type->type, $object->order_id);
+        if (!$nid) {
+          continue;
+        }
+        
+        // Load the node
+        $node = node_load($nid);
+        $node_type = content_types($type->type);
+        
+        // This is a hacky shortcut to prevent labels from being displayed
+        $node->build_mode = NODE_BUILD_SEARCH_INDEX;
+        
+        // Define title/body tokens
+        if ($node_type['has_title']) {
+          $values['uc-cck-'.$type->type.'-title'] = $node->title;
+        }
+        if ($node_type['has_body']) {
+          $values['uc-cck-'.$type->type.'-body'] = $node->content['body']['#value'];
+        }
+        
+        // Define CCK field tokens
+        foreach ($node_type['fields'] as $fid => $field) {
+          $values['uc-cck-'.$type->type.'-'.$fid] = content_view_field($field, $node);
+        }
+      }
+      break;
+  }
+  return $values;
+}
+
+/**
+ * Implementation of hook_checkout_pane().
+ */ 
+function uc_cck_pane_checkout_pane() {
+  $types = uc_cck_pane_get_types('types');
+  
+  $panes = array();
+  
+  foreach ($types as $type) {
+    $funcname = '_uc_cck_pane_' . $type->type;
+    
+    // Dynamically create callback function
+    if (!function_exists($funcname)) {
+      eval('function ' . $funcname . '($op, &$arg1, $arg2) { return uc_cck_pane_checkout_pane_callback(' . $type->type . ', $op, $arg1, $arg2); } ');  
+    }
+    
+    $node = node_load($nid);
+    $panes[] = array(
+      'id' => 'cck_type_' . $type->type,
+      'callback' => $funcname,
+      'title' => t($type->name),
+      'desc' => t($type->description),
+      'weight' => 0,
+      'enabled' => FALSE,
+    );  
+  }
+  
+  return $panes;
+} 
+
+/**
+ * Checkout Pane callback for dynamic callback function.
+ * 
+ * @link http://www.ubercart.org/docs/developer/245/checkout.
+ * @param $arg1 is the current order object if it exists.
+ * @param $arg2 is the contents of the array of the submitted form information for that pane. 
+ */   
+function uc_cck_pane_checkout_pane_callback($type_type, $op, &$arg1, $arg2) {
+  switch ($op) {
+    case 'view':
+      $form = _uc_cck_pane_edit_form($type_type, $arg1->order_id, 'checkout');
+      $type = node_get_types('type', $type_type);
+      return array(
+        'contents' => array($form),
+        'description' => t($type->help),
+        'theme' => 'uc_cck_pane_checkout_view'
+      );
+      break;
+    
+    case 'process':
+      _uc_cck_pane_save($type_type, $arg1->order_id, $arg2[0]);
+      return TRUE;
+      break;
+    
+    case 'review':
+      $nid = _uc_cck_pane_get_nid($type_type, $arg1->order_id);
+      $data = _uc_cck_pane_render($nid);
+      if ($data) {
+        return $data;
+      }
+      break;
+    
+    default:
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_uc_checkout_complete().
+ */
+function uc_cck_pane_uc_checkout_complete($order, $account) {
+  // Assign the CCK pane nodes to the newly created user
+  if (isset($order->data['new_user'])) {
+    $types = uc_cck_pane_get_types('types');
+    foreach ($types as $type) {
+      // Get the nid for the node type in the current order
+      $nid = _uc_cck_pane_get_nid($type->type, $order->order_id);
+      if ($nid) {
+        $node = node_load($nid);
+        $node->uid = $order->uid;
+        node_save($node);
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of hook_order_pane().
+ */
+function uc_cck_pane_order_pane() {
+  $types = uc_cck_pane_get_types('types');
+  
+  $panes = array();
+  
+  foreach ($types as $type) {
+    $funcname = '_uc_cck_order_pane_' . $type->type;
+    
+    // Dynamically create callback function
+    if (!function_exists($funcname)) {
+      eval('function ' . $funcname . '($op, $arg1) { return uc_cck_pane_order_pane_callback(' . $type->type . ', $op, $arg1); } ');  
+    }
+    
+    $node = node_load($nid);
+    $panes[] = array(
+      'id' => 'cck_type_' . $type->type,
+      'callback' => $funcname,
+      'title' => t($type->name),
+      'class' => 'abs-left',
+      'weight' => 7,
+      'show' => array('view', 'customer', 'edit'),
+    );
+  }
+  
+  return $panes;
+}
+
+/**
+ * Order Pane callback for dynamic order callback function.
+ */ 
+function uc_cck_pane_order_pane_callback($type_type, $op, $arg1) {
+  switch ($op) {
+    case 'view':
+    case 'customer':
+      $nid = _uc_cck_pane_get_nid($type_type, $arg1->order_id);
+      if ($nid) {
+        $data = _uc_cck_pane_render($nid);
+        if ($data) {
+          return theme('uc_cck_pane_order_view', $data);
+        }
+      }
+      break;
+    
+    case 'edit-form':
+      $nid = _uc_cck_pane_get_nid($type_type, $arg1->order_id);
+      if ($nid) {
+        $form['uc_cck_'.$type_type] = array('#value' => l(t('edit !type', array('!type' => $type_type)), 'node/'.$nid.'/edit'));
+      }
+      return $form;
+      break;
+    
+    case 'edit-theme':
+      $output = '<div id="cck-'.$type_type.'-select"></div>';
+      if ($arg1['uc_cck_'.$type_type]) {
+        $output .= drupal_render($arg1['uc_cck_'.$type_type]);
+      }
+      return $output;
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_order().
+ */
+function uc_cck_pane_order($op, &$arg1, $arg2) {  
+  switch ($op) {
+    // Delete from the database.
+    case 'delete':
+      $uc_cck_nodes = db_query("SELECT nid FROM {uc_cck_pane_submissions} WHERE order_id = %d", $arg1->order_id);
+      while ($uc_cck_node = db_fetch_object($uc_cck_nodes)) {
+        node_delete($uc_cck_node->nid);
+      }
+      db_query("DELETE FROM {uc_cck_pane_submissions} WHERE order_id = %d", $arg1->order_id);
+      break;
+  }
+}
+
+/**
+ * Save pane values as a node through CCK submit handler.
+ */ 
+function _uc_cck_pane_save($type, $order_id, $values) {
+  if ($nid = _uc_cck_pane_get_nid($type, $order_id)) {
+    $values['nid'] = $nid;
+    $values['vid'] = $nid;
+  }
+  
+  // If there were errors, don't save
+  if (form_get_errors()) {
+    return;
+  }
+  
+  // Save the node
+  $node = (object)$values;
+  node_save($node);
+  
+  // Insert the nid into our submissions table
+  if (!$nid) {
+    $nid = $node->nid;
+    db_query("INSERT INTO {uc_cck_pane_submissions} (type, order_id, nid) VALUES ('%s', %d, %d)", $type, $order_id, $nid);
+  }
+}
+
+/**
+ * Return CCK pane node nid.
+ */ 
+function _uc_cck_pane_get_nid($type, $order_id) {
+  return db_result(db_query("SELECT nid FROM {uc_cck_pane_submissions} WHERE type = '%s' AND order_id = %d", $type, $order_id));
+}
+
+/**
+ * Builds a list of content types that are marked as checkout panes.
+ *
+ * @param $op
+ *   When set to 'types', content profile content types are returned
+ *   as type objects. When set to 'names', only their type names are returned.
+ */
+function uc_cck_pane_get_types($op = 'types') {
+  $types = array();
+
+  foreach (node_get_types($op) as $type => $info) {
+    if (is_uc_cck_pane($type)) {
+      $types[$type] = $info;
+    }
+  }
+  return $types;
+}
+
+/**
+ * Determine if a given node (type) should be a checkout pane.
+ * @param $type
+ *   The node object or the node's type
+ */
+function is_uc_cck_pane($type) {
+  if (is_object($type)) {
+    $type = $type->type;
+  }
+  return variable_get('uc_cck_pane_type_'. $type, FALSE);
+}
+
+/**
+ * Render node data in Ubercart format.
+ */ 
+function _uc_cck_pane_render($nid) {
+  $node = node_load($nid);
+  $type = content_types($node->type);
+  
+  // This is a hacky shortcut to prevent labels from being displayed
+  $node->build_mode = NODE_BUILD_SEARCH_INDEX;
+  
+  $output = array();
+  
+  // Add title to output
+  if ($type['has_title']) {
+    $output[] = array('title' => $type['title_label'], 'data' => $node->title);
+  }
+  
+  // Add body to output
+  if ($type['has_body']) {
+    $output[] = array('title' => $type['body_label'], 'data' => $node->content['body']['#value']);
+  }
+  
+  // Add all CCK fields to output
+  foreach ($type['fields'] as $fid => $field) {
+    if (content_access('edit', $field, NULL, $node)) {
+      $output[] = array('title' => $field['widget']['label'], 'data' => content_view_field($field, $node));
+    }
+  }
+  
+  return $output;  
+}
+
+/**
+ * Theme the CCK checkout form.
+ */ 
+function theme_uc_cck_pane_checkout_view($form) {
+  // This needs '#type' => 'form' for '#field_info' to work
+  $form = drupal_render($form);
+  // Now remove the <form> tag generated around the pane
+  return preg_replace('|</?form[^>]*\>|', '', $form);
+}
+
+/**
+ * Theme node data on the order view page.
+ */ 
+function theme_uc_cck_pane_order_view($data) {
+  $output = '<table>';
+  foreach ($data as $row) {
+    $border = '';
+    if (isset($row['border'])) {
+      $border = ' class="row-border-'. $row['border'] .'"';
+    }
+    $output .= '<tr valign="top"'. $border .'><td class="title-col" '
+             .'nowrap>'. $row['title'] .':</td><td class="data-col">'
+             . $row['data'] .'</td></tr>';
+  }
+  $output .= '</table>';
+  return $output;
+}
+
+/**
+ * Generate a form to create/edit nodes in Ubercart.
+ */ 
+function _uc_cck_pane_edit_form($type, $order_id, $pane_type, $nid = NULL) {
+  global $user;
+
+  module_load_include('inc', 'node', 'node.pages');
+
+  if ($nid) {
+    $node = node_load($nid);
+  } else {
+    $node = array('uid' => $user->uid, 'name' => (isset($user->name) ? $user->name : ''), 'type' => $type, 'language' => '');
+  }
+
+  // Generate the form array
+  $form_state = array();
+  $form = drupal_retrieve_form($type .'_node_form', $form_state, $node);
+  drupal_prepare_form($type .'_node_form', $form, $form_state);
+
+  // Remove some things that get in the way
+  foreach (array('buttons', 'options', '#theme', '#parents', '#tree', '#id', '#enctype', '#cache') as $key) {
+    unset($form[$key]);
+  }
+  
+  // Flatten the body field
+  if (isset($form['body_field'])) {
+    $form['body'] = $form['body_field']['body'];
+    unset($form['body_field']['body']);
+  }
+  
+  // Clear the elements that prevent the pane from being submitted
+  foreach (element_children($form) as $fid) {
+    // Skip all fieldsets
+    if ($form[$fid]["#type"] == 'fieldset') {
+      unset($form[$fid]);
+      continue;
+    }
+   
+    //unset($form[$fid]['#parents']);
+    //unset($form[$fid]['#tree']);
+    //unset($form[$fid]["#name"]);
+  }
+  
+  //$cleanform = array('#type' => 'form', '#action' => '', 'bla' => array('#type' => 'textfield', '#required' => 1));
+  //$form = $cleanform;
+  
+  return $form;
+}

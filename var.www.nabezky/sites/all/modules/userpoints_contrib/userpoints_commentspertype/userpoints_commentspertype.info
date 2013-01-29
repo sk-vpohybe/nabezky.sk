@@ -1,0 +1,12 @@
+name = Userpoints Comments per Type
+description = Users get points for comments. Comments for different node types can be different.
+package = Userpoints
+dependencies[] = userpoints
+core = 6.x
+
+; Information added by drupal.org packaging script on 2012-05-25
+version = "6.x-1.0-beta1+13-dev"
+core = "6.x"
+project = "userpoints_contrib"
+datestamp = "1337949688"
+

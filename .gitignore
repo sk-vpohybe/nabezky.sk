@@ -1,0 +1,6 @@
+# Ignore configuration files that may contain sensitive information.
+var.www.nabezky/sites/*/settings*.php
+
+# Ignore paths that contain user-generated content.
+var.www.nabezky/sites/*/files
+var.www.nabezky/sites/*/private

@@ -1,0 +1,52 @@
+<?php
+
+/**
+ * @file
+ * Install hooks for uc_cck_pane.
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function uc_cck_pane_install() {
+  // Create tables.
+  drupal_install_schema('uc_cck_pane');
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function uc_cck_pane_schema() {
+  $schema['uc_cck_pane_submissions'] = array(
+    'fields' => array(
+      'type' => array('type' => 'varchar', 'length' => 32, 'not null' => TRUE, 'default' => ''),
+      'order_id' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      'nid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+    ),
+    'indexes' => array(
+      'nid' => array('nid'),
+    ),
+    'primary key' => array('type', 'order_id'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function uc_cck_pane_uninstall() {
+  // Remove tables.
+  drupal_uninstall_schema('uc_cck_pane');
+}
+
+/**
+ * Assign all CCK pane nodes to order users (updates anonymous checkouts with user creation).
+ */
+function uc_cck_pane_update_6201() {
+  $ret = array();
+  
+  $ret[] = update_sql("UPDATE {node} n NATURAL JOIN {uc_cck_pane_submissions} uccp LEFT JOIN {uc_orders} o ON uccp.order_id = o.order_id SET n.uid = o.uid WHERE EXISTS (SELECT uid FROM {users} u WHERE u.uid = o.uid)");
+  
+  return $ret;
+}

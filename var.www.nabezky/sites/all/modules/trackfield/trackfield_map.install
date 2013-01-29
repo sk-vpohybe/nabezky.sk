@@ -1,0 +1,49 @@
+<?php
+
+function trackfield_map_install() {
+  drupal_load('module', 'content');
+  content_notify('install', 'trackfield_map');
+}
+
+function trackfield_map_uninstall() {
+  drupal_load('module', 'content');
+  content_notify('uninstall', 'trackfield_map');
+}
+
+function trackfield_map_enable() {
+  drupal_load('module', 'content');
+  content_notify('enable', 'trackfield_map');
+}
+
+function trackfield_map_disable() {
+  drupal_load('module', 'content');
+  content_notify('disable', 'trackfield_map');
+}
+
+/*
+ * Ensure that content.module is updated before us.
+ */
+
+function trackfield_map_update_6000() {
+  if ($abort = content_check_update('trackfield_map')) {
+    return $abort;
+  }
+  return array();
+}
+
+/*
+ * Save default options in variable as they were previously hard coded.
+ */
+
+function trackfield_map_update_6001() {
+  $trackfield_map_format_sizes = array(
+    'Thumbnail' => array('width' => 133, 'height' => 100, 'type' => 'gmap_static', 'gmap_attr' => '|control=None |type=Map'),
+    'default' => array('width' => 480, 'height' => 360, 'type' => 'gmap', 'gmap_attr' => '|control=Small |type=Map'),
+    '640'  => array('width' => 640, 'height' => 480, 'type' => 'gmap', 'gmap_attr' => '|control=Small |type=Map'),
+    'Preview' => array('width' => 800, 'height' => 600, 'type' => 'gmap', 'gmap_attr' => '|control=Small |type=Map'),
+  );
+  variable_set('trackfield_map_format_sizes', $trackfield_map_format_sizes);
+  return array();
+}
+
+?>

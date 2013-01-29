@@ -1,0 +1,128 @@
+body {
+  margin: 0;
+  padding: 0;
+  font: 12px Verdana, sans-serif;
+}
+
+table {
+border-collapse: collapse;
+width: 100%;
+}
+
+a:link, a:visited {
+  color: #027AC6;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #0062A0;
+  text-decoration: underline;
+}
+
+a:active, a.active {
+  color: #5895be;
+}
+
+.attribution {
+font-size: 9px;
+line-height: 11px;
+padding-top: 1px;
+padding-bottom: 4px;
+}
+
+/*
+styles for map legend and date range control styles
+*/
+
+.track-type-1 {
+    background: url("/sites/default/files/pictures/nbMapColorsSprite.png") no-repeat scroll 0 0 transparent;
+    height: 16px;
+    margin-bottom: 1px;
+}
+.track-type-2 {
+    background: url("/sites/default/files/pictures/nbMapColorsSprite.png") no-repeat scroll 0 -17px transparent;
+    height: 16px;
+    margin-bottom: 1px;
+}
+.track-type-3 {
+    background: url("/sites/default/files/pictures/nbMapColorsSprite.png") no-repeat scroll 0 -35px transparent;
+    height: 16px;
+    margin-bottom: 1px;
+}
+.track-type-4 {
+    background: url("/sites/default/files/pictures/nbMapColorsSprite.png") no-repeat scroll 0 -53px transparent;
+    height: 16px;
+    margin-bottom: 1px;
+}
+.track-type-5 {
+    background: url("/sites/default/files/pictures/nbMapColorsSprite.png") no-repeat scroll 0 -71px transparent;
+    height: 16px;
+    margin-bottom: 1px;
+}
+.tracks-from-reports {
+    background: url("/sites/default/files/pictures/nbMapColorsSprite.png") no-repeat scroll 0 -89px transparent;
+    height: 16px;
+    margin-bottom: 1px;
+}
+
+.status-one-day {
+    background-color: gold;
+    border: thin solid gold;
+    display: inline-block;
+    padding: 0 5px 1px;
+    font-weight: bold;
+}
+
+.status-all {
+    background-color: gold;
+    border: thin solid gold;
+    display: inline-block;
+    padding: 0 5px 1px;
+    font-weight: bold;
+}
+
+.track-status-selector {
+    background-color: gold;
+    margin-bottom: -10px;
+    padding: 3px;
+    text-align: right;
+}
+
+.button {
+    background-color: Gold;
+    border: thin solid blue;
+    font-weight: bold;
+    padding: 3px;
+}
+
+/*openlayers-popup custom mods*/
+
+.edit-status {
+    display: block;
+}
+
+.track-stat-value {
+    font-weight: bold;
+}
+
+.track-stat-value-label {
+    font-weight: normal;
+}
+
+.track-stat-update {
+    font-weight: normal;
+    color: gray;
+}
+
+.track-stat-edit {
+    padding-top: 5px;
+}
+
+span.track-stat-edit a:link {
+    text-decoration: none;
+    background-color: gold;
+    padding: 3px;
+    border-bottom: solid 2px gray;
+    border-right: solid 2px gray;
+}
+

@@ -1,0 +1,13 @@
+name = Track Fetch Altitude
+description = Enriches trackfield input with altitude data where not provided or partial.
+core = 6.x
+version = "6.x-0.1-dev"
+dependencies[] = trackfield
+package = Trackfield
+
+; Information added by drupal.org packaging script on 2011-10-15
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "trackfield"
+datestamp = "1318638833"
+

@@ -1,0 +1,16 @@
+name = Ubercart CCK Checkout Pane
+description = "Allows CCK nodes to be displayed as checkout panes."
+core = 6.x
+package = Ubercart - extra
+
+dependencies[] = uc_product
+dependencies[] = uc_store
+dependencies[] = uc_cart
+dependencies[] = content
+
+; Information added by drupal.org packaging script on 2012-08-13
+version = "6.x-2.x-dev"
+core = "6.x"
+project = "uc_cck_pane"
+datestamp = "1344819155"
+

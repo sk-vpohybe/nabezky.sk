@@ -1,0 +1,66 @@
+<?php
+// $Id$
+
+/**
+  *  Implements hook_user().
+  *
+  *  Function checks each Profile Category for permission to view that category.
+  *  It also checks to see if the user is viewing their own profile,
+  *  and allows them to see their own info.
+  */
+function profile_category_privacy_user($op, &$edit, &$account, $category = NULL) {
+  // Call in the global $user variable, so users to view their own profile information.
+  global $user;
+
+  switch ($op) {
+    case 'view':
+      /**
+        * If:
+        *   - User has 'administer users' permission, or
+        *   - User is viewing their own profile,
+        * allow them to view all profile categories.
+        */
+      if ( user_access('administer users') || ($user->uid == $account->uid) ) {
+        break;
+      }
+      else {
+        /**
+          * Foreach profile category, check if the user has access permission.
+          * If not, unset (remove) that category from the profile content.
+          * Uses profile_catagories() from profile.module.
+          */
+        foreach ( profile_categories() as $category ) {
+          if ( !user_access(_profile_category_privacy_create_permissions($category['name'])) ) {
+            unset( $account->content[$category['name']] );
+          }
+        } # close foreach
+      } # close if/else
+      break;
+  } # close switch statement
+
+}
+
+
+/**
+  *  Implements hook_perm().
+  *
+  *  Returns an array containing the text to appear in admin/user/permissions.
+  *  Uses profile_categories() from profile.module.
+  */
+function profile_category_privacy_perm() {
+  $permissions = array();
+
+  foreach (profile_categories() as $category) {
+    $permissions[] = _profile_category_privacy_create_permissions($category['name']);
+  }
+
+  return $permissions;
+}
+
+/**
+  *  Function _profile_category_privacy_create_permissions($category)
+  *    formats profile category names into the text used for permissions
+  */
+function _profile_category_privacy_create_permissions($category) {
+  return "view profile category: " . $category;
+}

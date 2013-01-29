@@ -1,0 +1,336 @@
+<?php
+// $Id: userpoints_votingapi.module,v 1.1.2.1.2.8 2010/05/05 18:38:17 kmillecam Exp $
+    
+/**
+ * Implementation of hook_form_alter().
+ *
+ * Extends User Points module with Voting API settings.
+ *
+ * @param form
+ * @param form_state
+ */
+function userpoints_fivestar_form_userpoints_admin_settings_alter( &$form, $form_state ) {
+
+  // Shift system_settings_form buttons.
+  $weight = $form['buttons']['#weight'];
+  $form['buttons']['#weight'] = $weight + 1;
+
+  // add a fieldset for fivestar
+  $form['userpoints_fivestar'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Fivestar Voting API settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => t(''),
+  );
+  $form['userpoints_fivestar']['userpoints_fivestar_moderation_author'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Moderate author votes'),
+    '#default_value' => variable_get('userpoints_fivestar_moderation_author', 0),
+    '#description' => t('Moderate User Points earned by user for it\'s content.'),
+  );
+  $form['userpoints_fivestar']['userpoints_fivestar_moderation_voter'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Moderate voter votes'),
+    '#default_value' => variable_get('userpoints_fivestar_moderation_voter', 0),
+    '#description' => t('Moderate User Points earned by user who votes.'),
+  );
+
+  $form['userpoints_fivestar']['userpoints_fivestar_vote'] = array(
+    '#type' => 'textfield',
+    '#title' => t('!Points for voting', userpoints_translation()),
+    '#default_value' => variable_get('userpoints_fivestar_vote', 0),
+    '#size' => 5,
+    '#maxlength' => 5,
+  );
+
+  $form['userpoints_fivestar']['userpoints_fivestar_threshold'] = array(
+    '#type' => 'select',
+    '#title' => t('Threshold'),
+    '#options' => drupal_map_assoc(array(0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50)),
+    '#default_value' => variable_get('userpoints_fivestar_threshold', 0),
+    '#description' => t('The maximum number of votes -- that will earn User Points -- in the selected period.<br />Select 0 to ignore.'),
+  );
+  
+  $form['userpoints_fivestar']['userpoints_fivestar_period'] = array(
+    '#type' => 'select',
+    '#title' => t('Period'),
+    '#options' => array(
+      '3600' => t('Hourly'),
+      '86400' => t('Daily'),
+      '604800' => t('Weekly'),
+      '2592000' => t('Monthly (30 days)'),
+      '31536000' => t('Annually'),
+      ),
+    '#default_value' => variable_get('userpoints_fivestar_period', 86400),
+    '#description' => t('The time period during which the threshold applies.'),
+);
+  $form['userpoints_fivestar']['userpoints_fivestar_tid_author'] = array(
+    '#type' => 'select',
+    '#title' => t('Author category'),
+    '#default_value' => variable_get('userpoints_fivestar_tid_author', 0),
+    '#options' => userpoints_get_categories(),
+    '#description' => t('Earned author points will be assigned to this category. You can modify what categories are available by modifying the <a href="!url">Userpoints taxonomy</a>.', 
+      array('!url' => url('admin/content/taxonomy/'. variable_get('userpoints_category_default_vid', '')))),
+  );
+  $form['userpoints_fivestar']['userpoints_fivestar_tid_voter'] = array(
+    '#type' => 'select',
+    '#title' => t('Voter category'),
+    '#default_value' => variable_get('userpoints_fivestar_tid_voter', 0),
+    '#options' => userpoints_get_categories(),
+    '#description' => t('Earned voter points will be assigned to this category. You can modify what categories are available by modifying the <a href="!url">Userpoints taxonomy</a>.', 
+      array('!url' => url('admin/content/taxonomy/'. variable_get('userpoints_category_default_vid', '')))),
+  );
+  
+}
+
+/**
+ * Implementation of hook_late_form_FORM_ID_alter
+ *
+ * @param form
+ * @param form_state
+ */
+function userpoints_fivestar_late_form_node_type_form_alter( &$form, $form_state ) {
+	
+	// set properties to fivestar existing form components
+	
+	$form['fivestar']['direct']['#collapsible'] = TRUE;
+	$form['fivestar']['direct']['#collapsed'] = TRUE;
+	$form['fivestar']['comment']['#collapsible'] = TRUE;
+	$form['fivestar']['comment']['#collapsed'] = TRUE;
+	$form['fivestar']['comment']['#weight'] = 5;
+
+	
+	// add new fieldset to group informations for userpoint-fivestar integration
+  $form['fivestar']['userpoints_fivestar'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('User Points for Author'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => t('Assign Userpoints to the author for this content when a vote is cast.'),
+    '#weight' => 2,
+  );
+
+  $form['fivestar']['userpoints_fivestar']['userpoints_fivestar_enable'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable Author Userpoints'),
+    '#default_value' => variable_get('userpoints_fivestar_enable_'. $form['#node_type']->type, 0),      
+    '#return_value' => 1,
+    '#description' => t('When checked, userpoints are assigned to the author based on the values provided below. Note, number of slots corresponds to the Number of Stars setting above. Negative numbers are acceptable.'),
+  );
+  
+  // This form depends on the number of stars, and these extra textfields will be hidden with javascript
+  $star_count = variable_get('fivestar_stars_'. $form['#node_type']->type, 5);
+  $values = variable_get('userpoints_fivestar_'. $form['#node_type']->type, array());
+  $default_value = 0;
+	for ($n = 0; $n <= $star_count; $n++) {
+    $form['fivestar']['userpoints_fivestar']['userpoints_fivestar_value_'. $n] = array(
+      '#type' => 'textfield',
+      '#title' => $n > 0 ? t('Star @star Userpoint Value', array('@star' => $n)) : t('Cancel label'),
+      '#default_value' => isset($values[$n]) ? $values[$n] : $default_value,
+      '#prefix' => '<div id="userpoints-value-'. $n .'" class="userpoints-value">',
+      '#suffix' => '</div>',
+      '#size' => 30,
+    );
+  } 
+	
+	// add a new submit callback to save changes made by user on userpoints-fivestar integration module
+  $form['#submit'][] = 'userpoints_fivestar_late_form_submit';
+}
+
+
+/**
+ * Additional submit handler for the node type form.
+ *
+ * @param form
+ * @param form_state
+ */
+function userpoints_fivestar_late_form_submit($form, &$form_state) {
+  
+  $type = $form_state['values']['type'];
+
+  // Do not save any fivestar variables if fivestar is disabled.
+  if (isset($form_state['values']['fivestar']) && $form_state['values']['fivestar'] === 0) {
+    
+    // iterate on 10 stars (maximum allowed)
+    for ($n = 0; $n <= 10; $n++)
+      // delete automatic variable added by form_submit
+      variable_del('userpoints_fivestar_value_'. $n .'_'. $type);
+
+    variable_del('userpoints_fivestar_' . $type );
+  }
+  else {
+	  // Merge points into a single variable.
+	  $points = array();
+	  
+	  // get number of stars
+	  $count = $form_state['values']['fivestar_stars'];
+	  
+	  // iterate on 10 stars (maximum allowed)
+	  for ($n = 0; $n <= 10; $n++) {
+	  	// if current < number of stars, add it to points array
+	  	if( $n <= $count )
+	    	$points[] = $form_state['values']['userpoints_fivestar_value_'. $n];
+	    
+	    // delete automatic variable added by form_submit
+	    variable_del('userpoints_fivestar_value_'. $n .'_'. $type);
+	  }
+	  
+	  // delete fivestar values & add it if userpoints_fivestar is enabled
+	  variable_del('userpoints_fivestar_'. $type);
+	  if ($form_state['values']['userpoints_fivestar_enable']) {
+	    variable_set('userpoints_fivestar_'. $type, $points);
+	  }
+  }
+}
+
+
+/**
+ * Implementation of hook_votingapi_insert().
+ *
+ * TODO : refactor hook_votingapi_insert && hook_votingapi_delete to 
+ *        call the same function with a 1 / -1 param to set the correct vote
+ *
+ * @param vote
+ */
+function userpoints_fivestar_votingapi_insert($vote) {
+	
+  global $user;
+
+  $vote = $vote[0];
+  $nid = $vote["content_id"];
+  
+  $result = db_query( "SELECT type, uid FROM {node} WHERE nid=%d", $nid );
+  $infos = db_fetch_object( $result );
+
+  $threshold = variable_get('userpoints_fivestar_threshold', 0);
+  $points = variable_get( 'userpoints_fivestar_' . $infos->type, array( 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ) );
+
+  // get the number of votable stars (1-10)
+  $stars = variable_get('fivestar_stars_'. $infos->type, 0);
+
+  //calculate the position of the current vote value (value is given in percent)
+  // ie. first star = 1, second star = 2, etc.
+  $current_star = round( ($vote["value"] * $stars)/100, 0 );
+  $point = $points[$current_star];
+
+  // first add point(s) to voting user if needed
+  if( variable_get('userpoints_fivestar_vote', 0) != 0 ) {
+    if (($threshold == '0') || (userpoints_fivestar_within_threshold($vote['uid'], $threshold))) {
+      userpoints_userpointsapi(array(
+        'uid' => $vote['uid'],
+        'points' => variable_get('userpoints_fivestar_vote', 0),
+        'moderate' => variable_get('userpoints_fivestar_moderation_voter', 0),
+        'event' => $vote['tag'],
+        'entity_id' => $vote['content_id'],
+        'entity_type' => $vote['content_type'],
+        'operation' => t('vote'),
+        'tid' => variable_get('userpoints_fivestar_tid_voter', 0),
+        'description' => t('Vote cast: !content_type !content_id.',  array('!content_type' => $vote['content_type'], '!content_id' => $vote['content_id'])),
+        )
+      );
+    }
+  }
+
+
+  // second, get uid from author of voted content
+  $uid = FALSE;
+  switch ($vote['content_type']) {
+    case 'node':    $uid = db_result(db_query("SELECT uid FROM {node} WHERE nid = %d", $vote['content_id'])); break;
+    case 'comment': $uid = db_result(db_query("SELECT uid FROM {comments} WHERE cid = %d", $vote['content_id'])); break;
+    case 'user':    $uid = $vote['content_id']; break;
+  }
+
+  if ($uid && $user->uid !== $uid) {
+    userpoints_userpointsapi(array(
+      'uid' => $uid,
+      'points' => $point,
+      'moderate' => variable_get('userpoints_fivestar_moderation_author', 0),
+      'event' => $vote['tag'],
+      'entity_id' => $vote['content_id'],
+      'entity_type' => $vote['content_type'],
+      'operation' => t('vote'),
+      'tid' => variable_get('userpoints_fivestar_tid_author', 0),
+      'description' => t('Vote cast: !content_type !content_id.', array('!content_type' => $vote['content_type'], '!content_id' => $vote['content_id'])),
+      )
+    );
+  }
+}
+
+/**
+ * Implementation of hook_votingapi_delete().
+ *
+ * @param vote
+ */
+function userpoints_fivestar_votingapi_delete($vote) {
+  
+  global $user;
+  
+  $vote = $vote[0];
+  $nid = $vote["content_id"];
+  
+  $result = db_query( "SELECT type, uid FROM {node} WHERE nid=%d", $nid );
+  $infos = db_fetch_object( $result );
+  
+  $threshold = variable_get('userpoints_fivestar_threshold', 0);
+  $points = variable_get( 'userpoints_fivestar_' . $infos->type, array( 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ) );
+
+  // get the number of votable stars (1-10)
+  $stars = variable_get('fivestar_stars_'. $infos->type, 0);
+  //calculate the position of the current vote value (value is given in percent)
+  // ie. first star = 1, second star = 2, etc.
+  $current_star = round( ($vote["value"] * $stars)/100, 0 );
+  $point = $points[$current_star];
+  
+  // first remove point(s) to voting user if needed
+  if( variable_get( 'userpoints_fivestar_vote', 0 ) != 0 ) {
+    if (($threshold == '0') || (userpoints_fivestar_within_threshold($vote['uid'], $threshold))) {
+      userpoints_userpointsapi(array(
+        'uid' => $vote['uid'],
+        'points' => -1 * variable_get('userpoints_fivestar_vote', 1),
+        'moderate' => variable_get('userpoints_votingapi_moderation_voter', 0),
+        'event' => $vote['tag'],
+        'entity_id' => $vote['content_id'],
+        'entity_type' => $vote['content_type'],
+        'operation' => t('vote'),
+        'tid' => variable_get('userpoints_fivestar_tid_voter', 0),
+        'description' => t('Vote cancelled: !content_type !content_id.', array('!content_type' => $vote['content_type'], '!content_id' => $vote['content_id'])),
+        )
+      );
+    }
+  }
+  $uid = FALSE;
+  
+  // second, get uid from author of voted content
+  switch ($vote['content_type']) {
+    case 'node': $uid = db_result(db_query("SELECT uid FROM {node} WHERE nid = %d", $vote['content_id'])); break;
+    case 'comment': $uid = db_result(db_query("SELECT uid FROM {comments} WHERE cid = %d", $vote['content_id'])); break;
+    case 'user': $uid = $vote['content_id']; break;
+  }
+  
+  if ($uid && $user->uid !== $uid) {
+    userpoints_userpointsapi(array(
+      'uid' => $uid,
+      'points' => -1 * $point,
+      'moderate' => variable_get('userpoints_fivestar_moderation_author', 0),
+      'event' => $vote['tag'],
+      'entity_id' => $vote['content_id'],
+      'entity_type' => $vote['content_type'],
+      'operation' => t('vote'),
+      'tid' => variable_get('userpoints_fivestar_tid_author', 0),
+      'description' => t('Vote cancelled: !content_type !content_id.', array('!content_type' => $vote['content_type'], '!content_id' => $vote['content_id'])),
+      )
+    );
+  }
+}
+
+/**
+ * method to know if the user can vote again 
+ *
+ * @param uid
+ * @param threshold
+ */
+function userpoints_fivestar_within_threshold($uid, $threshold) {
+  $number = db_result(db_query("SELECT COUNT(*) FROM {userpoints_txn} WHERE operation = 'vote' AND uid = %d AND time_stamp > %d", $uid, time() - variable_get(userpoints_votingapi_period, 86400)));
+  return ($number < $threshold ? TRUE : FALSE);
+}

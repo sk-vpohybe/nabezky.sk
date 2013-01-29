@@ -1,0 +1,12 @@
+name = Role exempt
+description = Exempts certain roles from earning userpoints. Useful for admin and moderators.
+package = Userpoints
+dependencies[] = userpoints
+core = 6.x
+
+; Information added by drupal.org packaging script on 2012-05-25
+version = "6.x-1.0-beta1+13-dev"
+core = "6.x"
+project = "userpoints_contrib"
+datestamp = "1337949688"
+

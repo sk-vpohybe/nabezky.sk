@@ -1,0 +1,13 @@
+<?php
+function autocalc_shipping_form_alter(&$form,$form_state,$form_id){
+  if ($form_id == 'uc_cart_checkout_form'){
+    drupal_add_js('$(document).ready(function(){
+    if($(".messages.error").length == 0) {
+      $("input[id*=quote-button]").click().hide();
+    }
+    else {
+        $("input[id*=quote-button]").hide();
+    }
+    });', 'inline');
+  }
+}

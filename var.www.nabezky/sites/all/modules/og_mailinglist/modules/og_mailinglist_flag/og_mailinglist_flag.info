@@ -1,0 +1,13 @@
+name = OG Mailinglist Flag
+description = "Integrates Og Mailinglist with the Flag module to provide a simple ajaxy subscription to nodes for OG Mailinglist"
+dependencies[] = og_mailinglist
+dependencies[] = flag
+package = "Organic groups"
+core = "6.x"
+
+; Information added by drupal.org packaging script on 2012-12-06
+version = "6.x-1.0-beta10+32-dev"
+core = "6.x"
+project = "og_mailinglist"
+datestamp = "1354800082"
+

@@ -1,0 +1,69 @@
+<?php
+
+function trackfield_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+    case 'pgsql': /* TODO: Dunno if pgsql needs to differ */
+      db_query("CREATE TABLE {trackfield_datasets} (".
+        "nid integer unsigned NOT NULL default '0',".
+        "vid integer unsigned NOT NULL default '0',".
+        "field_name varchar(32) NOT NULL default '',".
+        "delta integer unsigned NOT NULL default '0',".
+        "settype varchar(16) NOT NULL default '',".
+        "setdata longtext not null default '',".
+        "PRIMARY KEY  (nid, vid, field_name, delta, settype))");
+      break;
+
+    default:
+      break;
+  } // End case
+
+  drupal_load('module', 'content');
+  content_notify('install', 'trackfield');
+}
+
+function trackfield_uninstall() {
+  if (db_table_exists('trackfield_datasets')) {
+    db_query("DROP TABLE {trackfield_datasets}");
+  }
+
+  drupal_load('module', 'content');
+  content_notify('uninstall', 'trackfield');
+}
+
+function trackfield_enable() {
+  drupal_load('module', 'content');
+  content_notify('enable', 'trackfield');
+}
+
+function trackfield_disable() {
+  drupal_load('module', 'content');
+  content_notify('disable', 'trackfield');
+}
+
+/*
+ * Ensure that content.module is updated before us.
+ */
+
+function trackfield_update_6000() {
+  if ($abort = content_check_update('trackfield')) {
+    return $abort;
+  }
+  return array();
+}
+
+/*
+ * In order to set locations properly the nodeapi hook
+ * must be called before location.
+ */
+
+function trackfield_update_6001() {
+  $row = db_fetch_object(db_query("SELECT weight FROM {system} WHERE name='location_node'"));
+  if ($row) {
+    db_query("UPDATE {system} SET weight = %d WHERE name='trackfield'", $row->weight - 1);
+  }
+  return array();
+}
+
+?>

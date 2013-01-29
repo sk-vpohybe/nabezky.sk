@@ -1,0 +1,253 @@
+# Slovak translation of Drupal core (6.19)
+# Copyright (c) 2010 by the Slovak translation team
+# Generated from files:
+#  openid.inc,v 1.8.2.3 2010/03/01 11:06:41 goba
+#  openid.module,v 1.19.2.11 2010/08/11 20:35:48 goba
+#  openid.pages.inc,v 1.5.2.2 2009/09/16 19:34:14 goba
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Drupal core (6.19)\n"
+"POT-Creation-Date: 2010-08-14 08:42+0000\n"
+"PO-Revision-Date: 2010-08-13 19:45+0000\n"
+"Language-Team: Slovak\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=((n==1)?(0):(((n>=2)&&(n<=4))?(1):2));\n"
+
+#: modules/openid/openid.inc:67
+msgid "Send"
+msgstr "Odoslať"
+
+#: modules/openid/openid.inc:44
+msgid "OpenID redirect"
+msgstr "OpenID presmerovanie"
+
+#: modules/openid/openid.module:14
+msgid "OpenID Login"
+msgstr "OpenID meno"
+
+#: modules/openid/openid.module:30
+msgid "Delete OpenID"
+msgstr "Vymazať OpenID"
+
+#: modules/openid/openid.module:69
+msgid "Once you have verified your email address, you may log in via OpenID."
+msgstr "Po overení vašej e-mailovej adresy sa môžete prihlásiť cez OpenID."
+
+#: modules/openid/openid.module:91,108
+msgid "Log in using OpenID"
+msgstr "Prihlásiť sa pomocou OpenID"
+
+#: modules/openid/openid.module:95
+msgid "Cancel OpenID login"
+msgstr "Zrušiť OpenID prihlásenie"
+
+#: modules/openid/openid.module:112
+msgid "What is OpenID?"
+msgstr "Čo je OpenID?"
+
+#: modules/openid/openid.pages.inc:18
+msgid "OpenID login failed."
+msgstr "OpenID prihlásenie zlyhalo."
+
+#: modules/openid/openid.pages.inc:21
+msgid "OpenID login cancelled."
+msgstr "OpenID prihlásenie bolo zrušené."
+
+#: modules/openid/openid.pages.inc:39
+msgid "Successfully added %identity"
+msgstr "Úspešne pridané %identity"
+
+#: modules/openid/openid.pages.inc:66
+msgid "Add an OpenID"
+msgstr "Pridať OpenID"
+
+#: modules/openid/openid.pages.inc:74
+msgid "That OpenID is already in use on this site."
+msgstr "Zadané OpenID sa už na stránke používa."
+
+#: modules/openid/openid.pages.inc:105
+msgid "Are you sure you want to delete the OpenID %authname for %user?"
+msgstr "Naozaj chcete odstrániť OpenID %authname používateľa %user?"
+
+#: modules/openid/openid.pages.inc:111
+msgid "OpenID deleted."
+msgstr "OpenID bolo vymazané."
+
+#: modules/openid/openid.module:167
+msgid ""
+"Sorry, that is not a valid OpenID. Please ensure you have spelled your ID "
+"correctly."
+msgstr ""
+"Ľutujem, ale toto nie je platné OpenID. Dajte pozor pri správnom zadávaní "
+"vášho ID."
+
+#: modules/openid/openid.module:423
+msgid ""
+"You must validate your email address for this account before logging in via "
+"OpenID"
+msgstr ""
+"Pred prihlásením cez OpenID musíte overiť vašu emailovú adresu pre tento "
+"účet."
+
+#: modules/openid/openid.module:47
+msgid ""
+"This site supports <a href=\"@openid-net\">OpenID</a>, a secure way to log "
+"into many websites using a single username and password. OpenID can reduce "
+"the necessity of managing many usernames and passwords for many websites."
+msgstr ""
+"Tento web podporuje <a href=\"@openid-net\">OpenID</a>, bezpečný spôsob pre "
+"prihlasovanie sa na rôzne webstránky použitím jedného používateľského mena a "
+"hesla. OpenID môže znížiť potrebu pamätať si množstvo  používateľských mien "
+"a hesiel pre rôzne stránky."
+
+#: modules/openid/openid.module:48
+msgid ""
+"To use OpenID you must first establish an identity on a public or private "
+"OpenID server. If you do not have an OpenID and would like one, look into "
+"one of the <a href=\"@openid-providers\">free public providers</a>. You can "
+"find out more about OpenID at <a href=\"@openid-net\">this website</a>."
+msgstr ""
+"Pre použitie OpenID musíte najprv vytvoriť identitu na verejnom alebo "
+"privátnom OpenID serveri. Ak nemáte OpenID a chcete mať, vyberte si "
+"poskytovateľa zo zoznamu <a href=\"@openid-providers\">bezplatných verejných "
+"poskytovateľov</a>. Viac informácií o OpenID môžete nájsť na <a href="
+"\"@openid-net\">tejto webstránke</a>."
+
+#: modules/openid/openid.module:49
+msgid ""
+"If you already have an OpenID, enter the URL to your OpenID server below (e."
+"g. myusername.openidprovider.com). Next time you login, you will be able to "
+"use this URL instead of a regular username and password. You can have "
+"multiple OpenID servers if you like; just keep adding them here."
+msgstr ""
+"Ak už máte OpenID identitu, zadajte nižšie URL svojho OpenID servera. (napr. "
+"pouzivatel.openid.net). Pri ďalšom prihlásení budete môcť použiť túto URL "
+"namiesto bežného mena a hesla. Môžete mať aj viac OpenID."
+
+#: modules/openid/openid.module:53
+msgid ""
+"OpenID is a secure method for logging into many websites with a single "
+"username and password. It does not require special software, and it does not "
+"share passwords with any site to which it is associated; including your site."
+msgstr ""
+"OpenID je bezpečná metóda pre prihlasovanie k viacerým  webom pomocou "
+"jediného používateľského mena a hesla. Nevyžaduje špeciálny software a "
+"nezdieľa heslo so žiadnym webem, kde sa používa, vrátane tohoto."
+
+#: modules/openid/openid.module:54
+msgid ""
+"Users can create accounts using their OpenID, assign one or more OpenIDs to "
+"an existing account, and log in using an OpenID. This lowers the barrier to "
+"registration, which is good for the site, and offers convenience and "
+"security to the users. OpenID is not a trust system, so email verification "
+"is still necessary. The benefit stems from the fact that users can have a "
+"single password that they can use on many websites. This means they can "
+"easily update their single password from a centralized location, rather than "
+"having to change dozens of passwords individually."
+msgstr ""
+"Používatelia majú možnosť prihlásiť sa pomocou svojho OpenID prípadne "
+"priradiť jednu alebo viac OpenID identít k existujúcemu účtu. Celý proces "
+"registrácie sa zjednodušuje a poskytuje to používateľom bezpečie a pohodlie. "
+"OpenID nie je systém na kontrolu záruky pôvodu používateľa, kontrola e-"
+"mailovej adresy je preto stále nutná. Hlavnou výhodou OpenID je, že "
+"používatelia majú jedno jediné heslo, ktoré môžu použiť na viacerých "
+"webových stránkach. To mimo iného znamená, že si môžu zmeniť heslo na jednom "
+"mieste, bez potreby navštíviť niekoľko stránok a meniť ho individuálne."
+
+#: modules/openid/openid.module:55
+msgid ""
+"The basic concept is as follows: A user has an account on an OpenID server. "
+"This account provides them with a unique URL (such as myusername."
+"openidprovider.com). When the user comes to your site, they are presented "
+"with the option of entering this URL. Your site then communicates with the "
+"OpenID server, asking it to verify the identity of the user. If the user is "
+"logged into their OpenID server, the server communicates back to your site, "
+"verifying the user. If they are not logged in, the OpenID server will ask "
+"the user for their password. At no point does your site record, or need to "
+"record the user's password."
+msgstr ""
+"Základný koncept OpenID: Používateľ má účet na OpenID serveri. Tento účet mu "
+"poskytuje jedinčný URL (ako napr. pouzivatel.openid.net). Ak príde na tento "
+"web, má možnosť zadať túto URL. Web potom komunikuje s OpenID serverom so "
+"žiadosťou o overenie identity používateľa. Ak je používateľ prihlásený k "
+"OpenID serveru, server vráti informácie späť webu a tohoto používateľa "
+"potvrdí. Ak prihlásený nie je, OpenID server sa spýta na používateľské "
+"heslo. V žiadnom bode web nezaznamenáva ani nemá prístup k heslu používateľa."
+
+#: modules/openid/openid.module:56
+msgid ""
+"More information on OpenID is available at <a href=\"@openid-net\">OpenID."
+"net</a>."
+msgstr ""
+"Podrobnejšie informácie o OpenID nájdete na <a href=\"@openid-net\">OpenID."
+"net</a>."
+
+#: modules/openid/openid.module:57
+msgid ""
+"For more information, see the online handbook entry for <a href=\"@handbook"
+"\">OpenID module</a>."
+msgstr ""
+"Ďalšie informácie sa dozviete v online príručke v kapitole <a href="
+"\"@handbook\">modul OpenID</a>."
+
+#: modules/openid/openid.module:21
+msgid "OpenID identities"
+msgstr "OpenID identity"
+
+#: modules/openid/openid.module:638,647,661
+msgid "openid"
+msgstr "openid"
+
+#: modules/openid/openid.module:130
+msgid "Your OpenID"
+msgstr "Vaše OpenID"
+
+#: modules/openid/openid.module:131
+msgid "This OpenID will be attached to your account after registration."
+msgstr "Toto OpenID bude po registrácii pričlenené k vášmu účtu."
+
+#: modules/openid/openid.module:437
+msgid ""
+"Please complete the registration by filling out the form below. If you "
+"already have an account, you can <a href=\"@login\">log in</a> now and add "
+"your OpenID under \"My account\"."
+msgstr ""
+"Prosím dokončite registráciu vyplnením nižšie umiestneného formulára. Ak už "
+"máte účet, môžete sa teraz <a href=\"@login\">prihlásiť</a> a môžete pridať "
+"vašu OpenID identitu v položke \"Môj účet\"."
+
+#: modules/openid/openid.module:446
+msgid ""
+"Account registration using the information provided by your OpenID provider "
+"failed due to the reasons listed below. Please complete the registration by "
+"filling out the form below. If you already have an account, you can <a href="
+"\"@login\">log in</a> now and add your OpenID under \"My account\"."
+msgstr ""
+"Registrácia účtu s použitím informácie poskytnutej vašim poskytovateľom "
+"OpenID zlyhalo z dôvodov zobrazených nižšie. Prosím dokončite registráciu "
+"vyplnením nižšie umiestneného formulára. Ak už máte účet, môžete sa teraz <a "
+"href=\"@login\">prihlásiť</a> a pridať vašu OpenID identitu v položke \"Môj "
+"účet\"."
+
+#: modules/openid/openid.module:638
+msgid ""
+"Nonce from @endpoint rejected because it is not correctly formatted, nonce: "
+"@nonce."
+msgstr ""
+"Nonce reťazec z @endpoint odmietnutý, pretože nie je správne formátovaný, "
+"nonce: @nonce."
+
+#: modules/openid/openid.module:647
+msgid ""
+"Nonce received from @endpoint is out of range (time difference: @intervals). "
+"Check possible clock skew."
+msgstr ""
+"Nonce reťazec, prijatý z @endpoint, je mimo rozsah (časový rozdiel: "
+"@intervals). Skontrolujte možnú časovú nepresnosť."
+
+#: modules/openid/openid.module:661
+msgid "Nonce replay attempt blocked from @ip, nonce: @nonce."
+msgstr "Pokus opakovania nonce blokovaný z @ip, nonce: @nonce."

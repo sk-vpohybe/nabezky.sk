@@ -1,0 +1,5 @@
+; $Id$
+name = Profile Category Privacy
+description = Allows visibility of profile categories to be set by user roles
+core = 6.x
+dependencies[] = profile

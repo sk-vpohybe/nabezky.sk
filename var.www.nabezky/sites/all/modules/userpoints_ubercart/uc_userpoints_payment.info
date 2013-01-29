@@ -1,0 +1,17 @@
+name = Userpoints Payment
+description = Interfaces Userpoints with Ubercart, for the purpose of making puchases.
+dependencies[] = userpoints
+dependencies[] = uc_order
+dependencies[] = uc_cart
+dependencies[] = uc_payment
+package = Ubercart - Userpoints
+
+core = 6.x
+php = 5.x
+
+; Information added by drupal.org packaging script on 2012-11-28
+version = "6.x-2.0-beta2+4-dev"
+core = "6.x"
+project = "userpoints_ubercart"
+datestamp = "1354110360"
+
