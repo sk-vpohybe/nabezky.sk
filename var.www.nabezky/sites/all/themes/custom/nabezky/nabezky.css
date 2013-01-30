@@ -1749,6 +1749,10 @@ div.comment div.links ul.links li.comment_forbidden span {
     top: 15px;
 }
 
+div.comment div.links {
+    margin-top: 30px;
+}
+
 .all-news-page {
     border: none  !important;
     max-height: none !important;
