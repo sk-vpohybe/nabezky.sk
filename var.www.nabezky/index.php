@@ -11,14 +11,6 @@
  * See COPYRIGHT.txt and LICENSE.txt.
  */
 
-/*
-if ($_SERVER['HTTP_HOST']==='some.domain.name.here') {
-  error_reporting(E_ALL);
-  ini_set('display_errors', TRUE);
-  ini_set('display_startup_errors', TRUE);
-}
-*/
-
 require_once './includes/bootstrap.inc';
 drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
 
