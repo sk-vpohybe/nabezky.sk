@@ -1891,3 +1891,23 @@ div.field-field-gpx-file {
     margin-bottom: 50px;
     margin-top: 31px;
 }
+
+.display_price {
+    float: right;
+    font-size: 15px;
+    font-weight: bold;
+    left: 93px;
+    position: relative;
+    text-align: right;
+    top: 24px;
+}
+
+.field-field-camera-golocation {
+    display: inline-block;
+    float: right;
+    position: relative;
+}
+
+.field-field-most-recent-shot {
+    display: inline-block;
+}
