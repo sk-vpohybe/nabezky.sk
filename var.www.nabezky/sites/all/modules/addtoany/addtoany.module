@@ -52,12 +52,12 @@ function addtoany_link($type, $node = NULL, $teaser = FALSE) {
 function addtoany_block($op = 'list', $delta = 0) {
   if ($op == 'list') {
     $blocks[0]['info'] = t('AddToAny button');
+    $blocks[0]['cache'] = BLOCK_NO_CACHE;
     return $blocks;
   }
   else if ($op == 'view') {
     $block['subject'] = t('AddToAny');
     $block['content'] = _addtoany_create_button(menu_get_object());
-	$block['cache'] = BLOCK_NO_CACHE; // Caching issue: http://drupal.org/node/610564
     return $block;
   }
 }
