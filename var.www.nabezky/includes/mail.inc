@@ -176,20 +176,71 @@ function drupal_mail_send($message) {
     return drupal_mail_wrapper($message);
   }
   else {
+    // If 'Return-Path' isn't already set in php.ini, we pass it separately
+    // as an additional parameter instead of in the header.
+    // However, if PHP's 'safe_mode' is on, this is not allowed.
+    if (isset($message['headers']['Return-Path']) && !ini_get('safe_mode')) {
+      $return_path_set = strpos(ini_get('sendmail_path'), ' -f');
+      if (!$return_path_set) {
+        $message['Return-Path'] = $message['headers']['Return-Path'];
+        unset($message['headers']['Return-Path']);
+      }
+    }
     $mimeheaders = array();
     foreach ($message['headers'] as $name => $value) {
-      $mimeheaders[] = $name .': '. mime_header_encode($value);
+      $mimeheaders[] = $name . ': ' . mime_header_encode($value);
     }
-    return mail(
-      $message['to'],
-      mime_header_encode($message['subject']),
-      // Note: e-mail uses CRLF for line-endings, but PHP's API requires LF.
-      // They will appear correctly in the actual e-mail that is sent.
-      str_replace("\r", '', $message['body']),
-      // For headers, PHP's API suggests that we use CRLF normally,
-      // but some MTAs incorrecly replace LF with CRLF. See #234403.
-      join("\n", $mimeheaders)
-    );
+    // Prepare mail commands.
+    $mail_subject = mime_header_encode($message['subject']);
+    // Note: e-mail uses CRLF for line-endings, but PHP's API requires LF.
+    // They will appear correctly in the actual e-mail that is sent.
+    $mail_body = str_replace('\r', '', $message['body']);
+    // For headers, PHP's API suggests that we use CRLF normally,
+    // but some MTAs incorrectly replace LF with CRLF. See #234403.
+    $mail_headers = join("\n", $mimeheaders);
+
+    // We suppress warnings and notices from mail() because of issues on some
+    // hosts. The return value of this method will still indicate whether mail
+    // was sent successfully.
+    if (!isset($_SERVER['WINDIR']) && strpos($_SERVER['SERVER_SOFTWARE'], 'Win32') === FALSE) {
+      if (isset($message['Return-Path']) && !ini_get('safe_mode')) {
+        // On most non-Windows systems, the "-f" option to the sendmail command
+        // is used to set the Return-Path. There is no space between -f and
+        // the value of the return path.
+        $mail_result = @mail(
+          $message['to'],
+          $mail_subject,
+          $mail_body,
+          $mail_headers,
+          '-f' . $message['Return-Path']
+        );
+      }
+      else {
+        // The optional $additional_parameters argument to mail() is not
+        // allowed if safe_mode is enabled. Passing any value throws a PHP
+        // warning and makes mail() return FALSE.
+        $mail_result = @mail(
+          $message['to'],
+          $mail_subject,
+          $mail_body,
+          $mail_headers
+        );
+      }
+     }
+     else {
+      // On Windows, PHP will use the value of sendmail_from for the
+      // Return-Path header.
+      $old_from = ini_get('sendmail_from');
+      ini_set('sendmail_from', $message['Return-Path']);
+      $mail_result = @mail(
+         $message['to'],
+         $mail_subject,
+         $mail_body,
+         $mail_headers
+       );
+      ini_set('sendmail_from', $old_from);
+     }
+     return $mail_result;
   }
 }
 
