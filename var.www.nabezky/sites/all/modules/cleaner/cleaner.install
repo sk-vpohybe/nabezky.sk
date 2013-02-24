@@ -1,0 +1,20 @@
+<?php
+// $Id: cleaner.install,v 1.2 2009/09/04 18:49:12 nancyw Exp $
+
+/**
+ * @file
+ * Allows the admin to set a schedule for clearing caches and other stuff.
+ */
+
+/**
+ * Implementation of hook_enable().
+ */
+function cleaner_enable() {
+  drupal_set_message(t('The Cleaner module settings are <a href="!url">here</a>.', array('!url' => url('admin/settings/cleaner'))));
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function cleaner_uninstall() {
+}
