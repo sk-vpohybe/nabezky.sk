@@ -6,5 +6,6 @@
 /usr/bin/php -q /var/www/nabezky/scripts/rgb2gs.php
 
 while inotifywait -e modify /var/www/nabezky/sites/default/files/ftp; do
+     sleep 180
      /usr/bin/php -q /var/www/nabezky/scripts/rgb2gs.php
 done
