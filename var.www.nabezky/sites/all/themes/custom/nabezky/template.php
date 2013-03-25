@@ -26,6 +26,7 @@ function nabezky_theme(){
   	}
    */
 
+
 /* adds link to the ubercart shopping cart page */
 function phptemplate_uc_empty_cart() {
   return '<p><div id="continue-shopping-link"><a href="/catalog/43">'. t('Continue shopping') .'</a></div></p>';
@@ -112,7 +113,7 @@ function phptemplate_comment_submitted($comment) {
       '!datetime' => format_date($comment->timestamp)
     ));
 }
-
+/**
 function phptemplate_node_submitted($node) {
   return t('!datetime — !username',
     array(
@@ -120,6 +121,30 @@ function phptemplate_node_submitted($node) {
       '!datetime' => format_date($node->created),
     ));
 }
+
+*/
+
+function phptemplate_node_submitted($node) {
+
+  $time_unit = 86400; // number of seconds in 1 day => 24 hours * 60 minutes * 60 seconds
+  $threshold = 1;
+
+  if ($node->changed && (round(($node->changed - $node->created) / $time_unit) > $threshold)){ // difference between created and changed times > than threshold
+    return t('Last updated on @changed.', array(
+      '@changed' => format_date($node->changed, 'medium'),
+      '!username' => theme('username', $node),
+      '@created' => format_date($node->created, 'small'),
+    ));
+  }
+  else{
+    return t('Submitted by !username on @datetime',
+      array(
+        '!username' => theme('username', $node),
+        '@datetime' => format_date($node->created),
+      ));
+  }
+}
+
 
 /**
  * Generates IE CSS links for LTR and RTL languages.
