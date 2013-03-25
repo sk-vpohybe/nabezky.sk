@@ -1915,3 +1915,25 @@ div.field-field-gpx-file {
 .vpsfree-logo {
     background-color: silver;
 }
+
+@font-face {
+	font-family: 'ratings';
+	src: url('http://www.nabezky.sk/sites/all/themes/custom/nabezky/fonts/ratings.ttf');
+}
+
+span.star-rating {
+    background-color: gold;
+    color: #027AC6;
+    display: inline-block;
+    font-family: 'ratings';
+    padding: 2px;
+    width: 60px;
+}
+
+div.view-recenzie div.view-content div.views-row div.views-field-field-image-fid {
+    display: inline-block;
+}
+
+div.view div table tbody tr td.views-field-field-image-fid {
+    text-align: center;
+}
