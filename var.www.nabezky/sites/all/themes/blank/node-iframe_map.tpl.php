@@ -30,7 +30,7 @@
   <div class="content clear-block" style="width:99%; border:solid thin black;">
     <?php print $content ?>
   </div>
-<div class="attribution">Relief and Contour Map derived from <a href="http://www2.jpl.nasa.gov/srtm/">Shuttle Radar Topography Mission</a> data set. Copyright &copy;2012 various <a href="http://www.openstreetmap.org/">OpenStreetMap</a> contributors. Licensed as <a href="http://creativecommons.org/licenses/by-sa/2.0/">Creative Commons (CC-BY-SA 2.0)</a>. Some rights reserved. Copyright &copy;2007-2012 <a href="http://wiki.freemap.sk/About">Freemap Slovakia</a></div>
+<div class="attribution">Relief and Contour Map derived from <a href="http://www2.jpl.nasa.gov/srtm/">Shuttle Radar Topography Mission</a> data set. Copyright &copy;2013 various <a href="http://www.openstreetmap.org/">OpenStreetMap</a> contributors. Licensed as <a href="http://creativecommons.org/licenses/by-sa/2.0/">Creative Commons (CC-BY-SA 2.0)</a>. Some rights reserved. Copyright &copy;2007-2013 <a href="http://wiki.freemap.sk/About">Freemap Slovakia</a></div>
 <table style="width: 99%; font-size:10px; margin-top: 5px;">
 	<tbody style="border-top: none;">
 	<tr>

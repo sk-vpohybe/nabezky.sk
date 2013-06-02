@@ -1268,7 +1268,7 @@ td.views-field-field-region-value {
 }
 
 .view-footer {
-    font-size: inherit;
+    font-size: smaller;
     text-align: right;
 }
 
@@ -1504,13 +1504,6 @@ div.field-field-remaining-spots div div {
 	display:inline;
 }
 
-/* 
-This hides the dummy furmanka from the block
-*/
-
-div.view-za-snehom div.view-content div.item-list ul li.views-row-last {
-    display: none;
-}
 
 /*
 styles for the snow condition view section in 
@@ -1729,12 +1722,6 @@ div#block-block-35:after {
     display: none;
 }
 
-div.poll {
-    background-color: LightSteelBlue;
-    margin-bottom: 30px;
-    padding: 6px;
-}
-
 .view-all-news {
     border: thin solid blue;
     max-height: 300px;
@@ -1883,10 +1870,6 @@ div.view-ski-center-updates div.view-content table.views-table tbody tr.odd td.v
     vertical-align: top;
 }
 
-div.poll {
-	margin-bottom: 0px !important;
-}
-
 div.field-field-gpx-file {
     margin-bottom: 50px;
     margin-top: 31px;
@@ -1936,4 +1919,14 @@ div.view-recenzie div.view-content div.views-row div.views-field-field-image-fid
 
 div.view div table tbody tr td.views-field-field-image-fid {
     text-align: center;
+}
+
+.advpoll-drag-and-drop-processed .advpoll-drag-box {
+    width: auto;
+}
+
+
+div.view-problemove-miesta div.view-content table.views-table tbody tr td.views-field-field-image-fid div.field-item {
+    display: inline;
+    padding-right: 3px;
 }
