@@ -1,4 +1,5 @@
 <?php
+// $Id: admin.settings.inc,v 1.2.2.8 2011/01/03 20:45:19 ezrag Exp $
 
 
 /**

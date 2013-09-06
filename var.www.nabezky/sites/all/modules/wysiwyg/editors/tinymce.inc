@@ -13,8 +13,8 @@
 function wysiwyg_tinymce_editor() {
   $editor['tinymce'] = array(
     'title' => 'TinyMCE',
-    'vendor url' => 'http://tinymce.moxiecode.com',
-    'download url' => 'http://tinymce.moxiecode.com/download.php',
+    'vendor url' => 'http://www.tinymce.com',
+    'download url' => 'http://www.tinymce.com/download/download.php',
     'library path' => wysiwyg_get_path('tinymce') . '/jscripts/tiny_mce',
     'libraries' => array(
       '' => array(
@@ -28,6 +28,7 @@ function wysiwyg_tinymce_editor() {
     ),
     'version callback' => 'wysiwyg_tinymce_version',
     'themes callback' => 'wysiwyg_tinymce_themes',
+    'init callback' => 'wysiwyg_tinymce_init',
     'settings callback' => 'wysiwyg_tinymce_settings',
     'plugin callback' => 'wysiwyg_tinymce_plugins',
     'plugin settings callback' => 'wysiwyg_tinymce_plugin_settings',
@@ -126,6 +127,40 @@ function wysiwyg_tinymce_themes($editor, $profile) {
 }
 
 /**
+ * Returns an initialization JavaScript for this editor library.
+ *
+ * @param array $editor
+ *   The editor library definition.
+ * @param string $library
+ *   The library variant key from $editor['libraries'].
+ * @param object $profile
+ *   The (first) wysiwyg editor profile.
+ *
+ * @return string
+ *   A string containing inline JavaScript to execute before the editor library
+ *   script is loaded.
+ */
+function wysiwyg_tinymce_init($editor, $library) {
+  // TinyMCE unconditionally searches for its library filename in SCRIPT tags on
+  // on the page upon loading the library in order to determine the base path to
+  // itself. When JavaScript aggregation is enabled, this search fails and all
+  // relative constructed paths within TinyMCE are broken. The library has a
+  // tinyMCE.baseURL property, but it is not publicly documented and thus not
+  // reliable. The official support forum suggests to solve the issue through
+  // the global window.tinyMCEPreInit variable also used by various serverside
+  // compressor scrips available from the official website.
+  // @see http://www.tinymce.com/forum/viewtopic.php?id=23286
+  $settings = drupal_to_js(array(
+    'base' => base_path() . $editor['library path'],
+    'suffix' => (strpos($library, 'src') !== FALSE || strpos($library, 'dev') !== FALSE ? '_src' : ''),
+    'query' => '',
+  ));
+  return <<<EOL
+window.tinyMCEPreInit = $settings;
+EOL;
+}
+
+/**
  * Return runtime editor settings for a given wysiwyg profile.
  *
  * @param $editor
@@ -147,9 +182,6 @@ function wysiwyg_tinymce_settings($editor, $config, $theme) {
     'plugins' => array(),
     'theme' => $theme,
     'width' => '100%',
-    // Rough estimate of editor height in pixels:
-    // 40 for the toolbar, 29 for the first row, and 15 for the rest.
-    'height' => isset($config['rows']) ? 40 + 29 + 15 * ($config['rows'] - 1) : 400,
     // Strict loading mode must be enabled; otherwise TinyMCE would use
     // document.write() in IE and Chrome.
     'strict_loading_mode' => TRUE,

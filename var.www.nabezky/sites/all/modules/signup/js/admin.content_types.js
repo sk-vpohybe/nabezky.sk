@@ -1,3 +1,4 @@
+/* $Id: admin.content_types.js,v 1.3.2.1 2009/04/15 22:25:44 dww Exp $ */
 
 /**
  * Conditionally show or hide the signup date field setting.

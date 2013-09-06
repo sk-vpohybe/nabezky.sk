@@ -1,4 +1,5 @@
 <?php
+// $Id: signup_cancel.inc,v 1.1.2.4 2009/01/25 03:10:58 dww Exp $
 
 
 /**

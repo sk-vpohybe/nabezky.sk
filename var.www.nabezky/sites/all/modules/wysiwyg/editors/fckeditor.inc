@@ -102,9 +102,7 @@ function wysiwyg_fckeditor_settings($editor, $config, $theme) {
     'SkinPath' => base_path() . $editor['library path'] . '/editor/skins/' . $theme . '/',
     'CustomConfigurationsPath' => base_path() . drupal_get_path('module', 'wysiwyg') . '/editors/js/fckeditor.config.js',
     'Width' => '100%',
-    // Rough estimate of editor height in pixels:
-    // 40 for the toolbar, 29 for the first row, and 15 for the rest.
-    'Height' => isset($config['rows']) ? 40 + 29 + 15 * ($config['rows'] - 1) : 400,
+    'Height' => 420,
     'LinkBrowser' => FALSE,
     'LinkUpload' => FALSE,
     'ImageBrowser' => FALSE,

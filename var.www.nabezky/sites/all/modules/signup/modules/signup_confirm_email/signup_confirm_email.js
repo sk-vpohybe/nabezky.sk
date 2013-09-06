@@ -1,3 +1,4 @@
+/* $Id: signup_confirm_email.js,v 1.1 2009/08/03 20:59:45 dww Exp $ */
 
 /**
  * Conditionally show the "Update e-mail..." checkbox on signup forms.

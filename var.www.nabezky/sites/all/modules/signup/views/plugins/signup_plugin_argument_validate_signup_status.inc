@@ -1,4 +1,5 @@
 <?php
+// $Id: signup_plugin_argument_validate_signup_status.inc,v 1.1 2008/11/12 01:00:58 dww Exp $
 
 /**
  * Validate whether an argument is a signup-enabled node.

@@ -1,3 +1,4 @@
+$Id: README.txt,v 1.14.2.2 2010/12/28 17:48:12 ezrag Exp $
 
 The signup module allows users to sign up for nodes of any type.  For
 each signup-enabled node, this module provides options for sending a

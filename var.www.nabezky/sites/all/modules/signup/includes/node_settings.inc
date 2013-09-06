@@ -1,4 +1,5 @@
 <?php
+// $Id: node_settings.inc,v 1.1.2.4 2009/09/21 05:23:09 dww Exp $
 
 
 /**

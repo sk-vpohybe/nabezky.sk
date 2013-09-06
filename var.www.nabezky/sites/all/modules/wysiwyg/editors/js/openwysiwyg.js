@@ -26,13 +26,13 @@ WYSIWYG.getEditor = function (n) {
 // Fix Drupal toolbar obscuring editor toolbar in fullscreen mode.
 var oldMaximize = WYSIWYG.maximize;
 WYSIWYG.maximize = function (n) {
-var $drupalToolbar = $('#toolbar', Drupal.overlayChild ? window.parent.document : document);
+var $drupalToolbars = $('#toolbar, #admin-menu', Drupal.overlayChild ? window.parent.document : document);
   oldMaximize.apply(this, arguments);
   if (this.maximized[n]) {
-    $drupalToolbar.hide();
+    $drupalToolbars.hide();
   }
   else {
-    $drupalToolbar.show();
+    $drupalToolbars.show();
   }
 }
 
@@ -58,22 +58,28 @@ Drupal.wysiwyg.editor.attach.openwysiwyg = function(context, params, settings) {
 /**
  * Detach a single or all editors.
  */
-Drupal.wysiwyg.editor.detach.openwysiwyg = function(context, params) {
+Drupal.wysiwyg.editor.detach.openwysiwyg = function (context, params, trigger) {
   if (typeof params != 'undefined') {
     var instance = WYSIWYG.config[params.field];
     if (typeof instance != 'undefined') {
       WYSIWYG.updateTextArea(params.field);
-      jQuery('#wysiwyg_div_' + params.field).remove();
-      delete instance;
+      if (trigger != 'serialize') {
+        jQuery('#wysiwyg_div_' + params.field).remove();
+        delete instance;
+      }
     }
-    jQuery('#' + params.field).show();
+    if (trigger != 'serialize') {
+      jQuery('#' + params.field).show();
+    }
   }
   else {
     jQuery.each(WYSIWYG.config, function(field) {
       WYSIWYG.updateTextArea(field);
-      jQuery('#wysiwyg_div_' + field).remove();
-      delete this;
-      jQuery('#' + field).show();
+      if (trigger != 'serialize') {
+        jQuery('#wysiwyg_div_' + field).remove();
+        delete this;
+        jQuery('#' + field).show();
+      }
     });
   }
 };

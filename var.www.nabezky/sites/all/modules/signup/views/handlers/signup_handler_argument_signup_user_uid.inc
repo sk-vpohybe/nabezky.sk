@@ -1,4 +1,5 @@
 <?php
+// $Id: signup_handler_argument_signup_user_uid.inc,v 1.1 2008/11/12 01:00:58 dww Exp $
 
 /**
  * Argument handler display nodes the given UID has not signed up for.

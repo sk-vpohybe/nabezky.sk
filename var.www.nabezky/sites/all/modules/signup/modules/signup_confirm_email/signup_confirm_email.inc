@@ -1,4 +1,5 @@
 <?php
+// $Id: signup_confirm_email.inc,v 1.1.2.3 2009/09/21 06:56:40 dww Exp $
 
 /**
  * @file

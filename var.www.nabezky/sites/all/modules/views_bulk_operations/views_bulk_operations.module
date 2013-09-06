@@ -145,20 +145,20 @@ function views_bulk_operations_add_actions($vid, $actions) {
 
     if (empty($ignored)) {
       watchdog('vbo', 'View %vid was successfully modified. The following actions were added: %added.', array(
-        '%vid' => $vid, 
+        '%vid' => $vid,
         '%added' => implode(', ', $added)
       ), WATCHDOG_INFO);
     } else {
       watchdog('vbo', 'View %vid was modified. The following actions were added: %added. The following actions were ignored: %ignored.', array(
-        '%vid' => $vid, 
-        '%added' => implode(', ', $added), 
+        '%vid' => $vid,
+        '%added' => implode(', ', $added),
         '%ignored' => implode(', ', $ignored)
       ), WATCHDOG_WARNING);
     }
   }
   else {
     watchdog('vbo', 'View %vid was NOT modified. The following actions were ignored: %ignored.', array(
-      '%vid' => $vid, 
+      '%vid' => $vid,
       '%ignored' => implode(', ', $ignored)
     ), WATCHDOG_ERROR);
   }
@@ -277,7 +277,7 @@ function views_bulk_operations_theme() {
       'pattern' => 'views_bulk_operations_table__',
     ),
   );
-  
+
   // Load action theme files.
   foreach (_views_bulk_operations_load_actions() as $file) {
     $action_theme_fn = 'views_bulk_operations_'. $file .'_action_theme';
@@ -400,10 +400,17 @@ function theme_views_node_selector($element) {
       $headers[] = array('data' => $label, 'class' => "views-field views-field-{$vars['fields'][$field]}");
     }
     foreach ($records as $num => $object) {
-      $row = array('class' => 'rowclick', 'data' => array());
+      $vars['row_classes'][$num][] = 'rowclick';
+      $row = array('class' => implode(' ', $vars['row_classes'][$num]), 'data' => array());
       $row['data'][] =  theme('checkbox', $element['selection'][_views_bulk_operations_hash_object($object, $view)]);
       foreach ($vars['rows'][$num] as $field => $content) {
-        $row['data'][] = array('data' => $content, 'class' => "views-field views-field-{$vars['fields'][$field]}");
+        // Support field classes in Views 3, but provide a fallback for Views 2.
+        if (views_api_version() == 2) {
+          $row['data'][] = array('data' => $content, 'class' => 'views-field views-field-' . $vars['fields'][$field]);
+        }
+        else {
+          $row['data'][] = array('data' => $content, 'class' => $vars['field_classes'][$field][$num]);
+        }
       }
       $rows[] = $row;
     }
@@ -448,7 +455,7 @@ function views_bulk_operations_form($form_state, $form_id, $plugin) {
   }
 
   // Force browser to reload the page if Back is hit.
-  if (preg_match('/msie/i', $_SERVER['HTTP_USER_AGENT'])) {
+  if (!empty($_SERVER['HTTP_USER_AGENT']) && preg_match('/msie/i', $_SERVER['HTTP_USER_AGENT'])) {
     drupal_set_header("Cache-Control: no-cache"); // works for IE6+
   }
   else {
@@ -708,6 +715,8 @@ function views_bulk_operations_form_submit($form, &$form_state) {
   $form_id = $form_state['values']['form_id'];
   $plugin = $form['#plugin'];
   $view = $plugin->view;
+  $view_id = _views_bulk_operations_view_id($view);
+  $view_name = $view->name;
 
   $form_state['storage']['step'] = $step = $form_state['values']['step'];
   switch ($step) {
@@ -715,6 +724,7 @@ function views_bulk_operations_form_submit($form, &$form_state) {
       $form_state['storage']['selection'] = _views_bulk_operations_get_selection($plugin, $form_state, $form_id);
       $form_state['storage']['selectall'] = $form_state['values']['objects']['selectall'];
       $form_state['storage']['operation'] = $operation = $plugin->get_operation_info($form_state['values']['operation']);
+      $_SESSION['vbo_values'][$view_name][$view_id]['operation'] = $operation['key'];
       if (!$operation['configurable'] && !empty($operation['options']['skip_confirmation'])) {
         break; // Go directly to execution
       }
@@ -724,6 +734,7 @@ function views_bulk_operations_form_submit($form, &$form_state) {
       $form_state['storage']['selection'] = _views_bulk_operations_get_selection($plugin, $form_state, $form_id);
       $form_state['storage']['selectall'] = $form_state['values']['objects']['selectall'];
       $form_state['storage']['operation'] = $operation = $plugin->get_operation_info($form_state['values']['operation']);
+      $_SESSION['vbo_values'][$view_name][$view_id]['operation'] = $operation['key'];
       if ($operation['configurable']) {
         $form_state['storage']['operation_arguments'] = _views_bulk_operations_action_submit($operation, $form, $form_state);
       }
@@ -1862,7 +1873,7 @@ function _views_bulk_operations_action_permission($operation, $account = NULL) {
     if (!user_access($perm, $account)) {
       global $user;
       watchdog('vbo', 'An attempt by user %user to !perm was blocked due to insufficient permissions.', array(
-        '!perm' => $perm, 
+        '!perm' => $perm,
         '%user' => isset($account) ? $account->name : $user->name
       ), WATCHDOG_ALERT);
       drupal_access_denied();
@@ -1875,7 +1886,7 @@ function _views_bulk_operations_action_permission($operation, $account = NULL) {
     if (!user_access($perm, $account)) {
       global $user;
       watchdog('vbo', 'An attempt by user %user to !perm was blocked due to insufficient permissions.', array(
-        '!perm' => $perm, 
+        '!perm' => $perm,
         '%user' => isset($account) ? $account->name : $user->name
       ), WATCHDOG_ALERT);
       drupal_access_denied();
@@ -2047,9 +2058,9 @@ function views_bulk_operations_ajax_data_alter(&$object, $type, $view) {
 
 /**
  * Helper function to calculate hash of an object.
- * 
+ *
  * The default "hashing" is to use the object's primary/unique id. This would fail for VBOs that return many rows with
- * the same primary key (e.g. a *node* view returning all node *comments*).  Because we don't know in advance what kind of 
+ * the same primary key (e.g. a *node* view returning all node *comments*).  Because we don't know in advance what kind of
  * hashing is needed, we allow for a module to implement its own hashing via
  *
  * hook_views_bulk_operations_object_hash_alter(&$hash, $object, $view).

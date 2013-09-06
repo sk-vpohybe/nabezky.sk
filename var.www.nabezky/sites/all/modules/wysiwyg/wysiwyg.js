@@ -71,7 +71,7 @@ Drupal.behaviors.attachWysiwyg = function(context) {
       if (event.originalEvent.returnValue === false) {
         return;
       }
-      Drupal.wysiwygDetach(context, params);
+      Drupal.wysiwygDetach(context, params, 'serialize');
     });
   });
 };
@@ -113,7 +113,7 @@ Drupal.wysiwygAttach = function(context, params) {
     }
     // Attach editor, if enabled by default or last state was enabled.
     if (params.status) {
-      Drupal.wysiwyg.editor.attach[params.editor](context, params, (Drupal.settings.wysiwyg.configs[params.editor] ? jQuery.extend(true, {}, Drupal.settings.wysiwyg.configs[params.editor][params.format][params.field]) : {}));
+      Drupal.wysiwyg.editor.attach[params.editor](context, params, (Drupal.settings.wysiwyg.configs[params.editor] ? jQuery.extend(true, {}, Drupal.settings.wysiwyg.configs[params.editor][params.format]) : {}));
     }
     // Otherwise, attach default behaviors.
     else {
@@ -130,11 +130,16 @@ Drupal.wysiwygAttach = function(context, params) {
  *   A DOM element, supplied by Drupal.attachBehaviors().
  * @param params
  *   An object containing input format parameters.
+ * @param trigger
+ *   A string describing what is causing the editor to be detached.
+ *
+ * @see Drupal.detachBehaviors
  */
-Drupal.wysiwygDetach = function(context, params) {
+Drupal.wysiwygDetach = function (context, params, trigger) {
+  trigger = trigger || 'unload';
   var editor = Drupal.wysiwyg.instances[params.field].editor;
   if (jQuery.isFunction(Drupal.wysiwyg.editor.detach[editor])) {
-    Drupal.wysiwyg.editor.detach[editor](context, params);
+    Drupal.wysiwyg.editor.detach[editor](context, params, trigger);
   }
 };
 
@@ -228,5 +233,15 @@ Drupal.wysiwyg.getParams = function(element, params) {
  * Allow certain editor libraries to initialize before the DOM is loaded.
  */
 Drupal.wysiwygInit();
+
+// Respond to CTools detach behaviors event.
+$(document).bind('CToolsDetachBehaviors', function(event, context) {
+  $('.wysiwyg', context).removeClass('wysiwyg').each(function () {
+    if (this.checked) {
+      var params = Drupal.wysiwyg.getParams(this);
+      Drupal.wysiwygDetach(context, params, 'unload');
+    }
+  });
+});
 
 })(jQuery);

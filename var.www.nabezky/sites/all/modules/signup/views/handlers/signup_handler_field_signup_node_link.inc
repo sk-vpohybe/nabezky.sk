@@ -1,4 +1,5 @@
 <?php
+// $Id: signup_handler_field_signup_node_link.inc,v 1.1.2.3 2009/09/20 23:12:37 dww Exp $
 
 /**
  * Field handler to generate links to the various signup subtabs on a node.

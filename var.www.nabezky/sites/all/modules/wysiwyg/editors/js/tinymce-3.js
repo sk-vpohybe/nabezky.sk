@@ -15,32 +15,21 @@ Drupal.wysiwyg.editor.init.tinymce = function(settings) {
   if (tinymce.query == 'q') {
     tinymce.query = '';
   }
-  // If JS compression is enabled, TinyMCE is unable to autodetect its global
-  // settinge, hence we need to define them manually.
-  // @todo Move global library settings somewhere else.
-  tinyMCE.baseURL = settings.global.editorBasePath;
-  tinyMCE.srcMode = (settings.global.execMode == 'src' ? '_src' : '');
-  tinyMCE.gzipMode = (settings.global.execMode == 'gzip');
-
   // Fix Drupal toolbar obscuring editor toolbar in fullscreen mode.
-  var $drupalToolbar = $('#toolbar', Drupal.overlayChild ? window.parent.document : document);
+  var $drupalToolbars = $('#toolbar, #admin-menu', Drupal.overlayChild ? window.parent.document : document);
   tinyMCE.onAddEditor.add(function (mgr, ed) {
     if (ed.id == 'mce_fullscreen') {
-      $drupalToolbar.hide();
+      $drupalToolbars.hide();
     }
   });
   tinyMCE.onRemoveEditor.add(function (mgr, ed) {
     if (ed.id == 'mce_fullscreen') {
-      $drupalToolbar.show();
+      $drupalToolbars.show();
     }
   });
 
   // Initialize editor configurations.
   for (var format in settings) {
-    if (format == 'global') {
-      continue;
-    };
-    tinyMCE.init(settings[format]);
     if (Drupal.settings.wysiwyg.plugins[format]) {
       // Load native external plugins.
       // Array syntax required; 'native' is a predefined token in JavaScript.
@@ -67,6 +56,8 @@ Drupal.wysiwyg.editor.attach.tinymce = function(context, params, settings) {
   ed.onEvent.add(function(ed, e) {
     Drupal.wysiwyg.activeId = ed.id;
   });
+  // Indicate that the DOM has been loaded (in case of Ajax).
+  tinymce.dom.Event.domLoaded = true;
   // Make toolbar buttons wrappable (required for IE).
   ed.onPostRender.add(function (ed) {
     var $toolbar = $('<div class="wysiwygToolbar"></div>');
@@ -89,6 +80,13 @@ Drupal.wysiwyg.editor.attach.tinymce = function(context, params, settings) {
 
   // Attach editor.
   ed.render();
+  if (tinymce.minorVersion == '5.7') {
+    // Work around a TinyMCE bug hiding new instances when switching to them.
+    // @see http://www.tinymce.com/develop/bugtracker_view.php?id=5510
+    setTimeout(function () {
+      tinymce.DOM.show(ed.editorContainer);
+    }, 1);
+  }
 };
 
 /**
@@ -96,20 +94,24 @@ Drupal.wysiwyg.editor.attach.tinymce = function(context, params, settings) {
  *
  * See Drupal.wysiwyg.editor.detach.none() for a full desciption of this hook.
  */
-Drupal.wysiwyg.editor.detach.tinymce = function(context, params) {
+Drupal.wysiwyg.editor.detach.tinymce = function (context, params, trigger) {
   if (typeof params != 'undefined') {
     var instance = tinyMCE.get(params.field);
     if (instance) {
       instance.save();
-      instance.remove();
+      if (trigger != 'serialize') {
+        instance.remove();
+      }
     }
   }
   else {
     // Save contents of all editors back into textareas.
     tinyMCE.triggerSave();
-    // Remove all editor instances.
-    for (var instance in tinyMCE.editors) {
-      tinyMCE.editors[instance].remove();
+    if (trigger != 'serialize') {
+      // Remove all editor instances.
+      for (var instance in tinyMCE.editors) {
+        tinyMCE.editors[instance].remove();
+      }
     }
   }
 };
