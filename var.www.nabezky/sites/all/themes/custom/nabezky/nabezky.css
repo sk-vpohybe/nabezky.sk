@@ -266,7 +266,7 @@ td.region, td.module, td.container, td.category {
 }
 
 tr:first-child td.region, tr:first-child td.module, tr:first-child td.container, tr:first-child td.category {
-  border-top-width: 0;
+    border: 27px solid white;
 }
 
 span.form-required {
@@ -1929,4 +1929,45 @@ div.view div table tbody tr td.views-field-field-image-fid {
 div.view-problemove-miesta div.view-content table.views-table tbody tr td.views-field-field-image-fid div.field-item {
     display: inline;
     padding-right: 3px;
+}
+
+div.view div.view-content table.views-table tbody tr td.views-field-created {
+    white-space: nowrap;
+}
+
+div.view div.view-content table.views-table thead tr th.views-field-phpcode {
+    white-space: nowrap;
+}
+
+div div#order-pane-cck_type_ubercart_name_display.order-pane table tbody tr:first-child {display:none}
+
+.product-body {
+    width: 80%;
+}
+
+.volne-miesta-ano {
+    background-color: green;
+    color: white;
+    display: block;
+    padding-left: 2px;
+    padding-right: 2px;
+    text-align: left;
+}
+
+.volne-miesta-nie {
+    background-color: red;
+    color: white;
+    display: block;
+    padding-left: 2px;
+    padding-right: 2px;
+    text-align: left;
+}
+
+view-item div.calendar.3526.field_class_date.0.0 div.view-data-node-title {
+	font-weight:bold !important;
+}
+
+.calendar-calendar div.month-view table tbody tr td div.inner div.view-item div div.view-data-node-title a {
+    color: #027AC6;
+    font-weight: bold;
 }

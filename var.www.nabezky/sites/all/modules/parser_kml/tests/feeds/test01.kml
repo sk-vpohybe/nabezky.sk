@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://earth.google.com/kml/2.0" xmlns:fs="http://rver.com/ns" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+<atom:link rel="self" href="http://localhost/featureserver.py/cities/all.kml/cities/cities-data.kml" type="application/vnd.google-earth.kml+xml" /> 
+<Style id="allstyle">
+    <LineStyle>
+        <width>5</width>
+        <color>ff0099ee</color>
+    </LineStyle>
+    <PolyStyle>
+        <color>900099ee</color>
+    </PolyStyle>
+</Style>
+        
+
+        <Placemark id="1478">
+        <name></name>
+        <description><![CDATA[Properties:<br /><b>status</b>: Other<br /><b>objectid</b>: 1477<br /><b>port_id</b>: 40760<br /><b>pop_rank</b>: 4<br /><b>gmi_admin</b>: ITA-VEN<br /><b>cntry_name</b>: Italy<br /><b>gid</b>: 1478<br /><b>label_flag</b>: 0<br /><b>city_name</b>: Venice<br /><b>pop_class</b>: 250,000 to 500,000<br /><b>admin_name</b>: Veneto<br /><b>fips_cntry</b>: IT]]></description>
+        <styleUrl>#allstyle</styleUrl>
+        <atom:link href="http://localhost/featureserver.py/cities/all.kml/cities/1478.kml" type="edit" />
+        <Metadata>
+          <fs:status>Other</fs:status>
+<fs:objectid>1477</fs:objectid>
+<fs:port_id>40760</fs:port_id>
+<fs:pop_rank>4</fs:pop_rank>
+<fs:gmi_admin>ITA-VEN</fs:gmi_admin>
+<fs:cntry_name>Italy</fs:cntry_name>
+<fs:gid>1478</fs:gid>
+<fs:label_flag>0</fs:label_flag>
+<fs:city_name>Venice</fs:city_name>
+<fs:pop_class>250,000 to 500,000</fs:pop_class>
+<fs:admin_name>Veneto</fs:admin_name>
+<fs:fips_cntry>IT</fs:fips_cntry>
+        </Metadata>
+        <Point><coordinates>12.3707163636,45.424773</coordinates></Point>
+        </Placemark>
+
+        <Placemark id="1506">
+        <name>Leszno</name>
+        <description><![CDATA[Properties:<br /><b>status</b>: Provincial capital<br /><b>objectid</b>: 1505<br /><b>port_id</b>: 0<br /><b>pop_rank</b>: 6<br /><b>gmi_admin</b>: POL-LSZ<br /><b>cntry_name</b>: Poland<br /><b>gid</b>: 1506<br /><b>label_flag</b>: 1<br /><b>city_name</b>: Leszno<br /><b>pop_class</b>: 50,000 to 100,000<br /><b>admin_name</b>: Leszno<br /><b>fips_cntry</b>: PL]]></description>
+        <styleUrl>#allstyle</styleUrl>
+        <atom:link href="http://localhost/featureserver.py/cities/all.kml/cities/1506.kml" type="edit" />
+        <Metadata>
+          <fs:status>Provincial capital</fs:status>
+<fs:objectid>1505</fs:objectid>
+<fs:port_id>0</fs:port_id>
+<fs:pop_rank>6</fs:pop_rank>
+<fs:gmi_admin>POL-LSZ</fs:gmi_admin>
+<fs:cntry_name>Poland</fs:cntry_name>
+<fs:gid>1506</fs:gid>
+<fs:label_flag>1</fs:label_flag>
+<fs:city_name>Leszno</fs:city_name>
+<fs:pop_class>50,000 to 100,000</fs:pop_class>
+<fs:admin_name>Leszno</fs:admin_name>
+<fs:fips_cntry>PL</fs:fips_cntry>
+        </Metadata>
+        <Point><coordinates>16.5660033636,51.843996</coordinates></Point>
+        </Placemark>
+
+        <Placemark id="1574">
+        <name></name>
+        <description><![CDATA[Properties:<br /><b>status</b>: Other<br /><b>objectid</b>: 1573<br /><b>port_id</b>: 22030<br /><b>pop_rank</b>: 7<br /><b>gmi_admin</b>: NOR-NRD<br /><b>cntry_name</b>: Norway<br /><b>gid</b>: 1574<br /><b>label_flag</b>: 0<br /><b>city_name</b>: Narvik<br /><b>pop_class</b>: Less than 50,000<br /><b>admin_name</b>: Nordland<br /><b>fips_cntry</b>: NO]]></description>
+        <styleUrl>#allstyle</styleUrl>
+        <atom:link href="http://localhost/featureserver.py/cities/all.kml/cities/1574.kml" type="edit" />
+        <Metadata>
+          <fs:status>Other</fs:status>
+<fs:objectid>1573</fs:objectid>
+<fs:port_id>22030</fs:port_id>
+<fs:pop_rank>7</fs:pop_rank>
+<fs:gmi_admin>NOR-NRD</fs:gmi_admin>
+<fs:cntry_name>Norway</fs:cntry_name>
+<fs:gid>1574</fs:gid>
+<fs:label_flag>0</fs:label_flag>
+<fs:city_name>Narvik</fs:city_name>
+<fs:pop_class>Less than 50,000</fs:pop_class>
+<fs:admin_name>Nordland</fs:admin_name>
+<fs:fips_cntry>NO</fs:fips_cntry>
+        </Metadata>
+        <Point><coordinates>17.2999983636,68.349996</coordinates></Point>
+        </Placemark>
+</Document>
+        </kml>
+

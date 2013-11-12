@@ -31,10 +31,13 @@ function array_to_comma_delimited_string($array) {
 }
 
 function _og_mailinglist_build_footer($node) {
-    $footer = "--
+    $footer = "
+" . "--" . "
 " . t("Full post") . ": " .  url("node/" . $node->nid, array('absolute' => TRUE))   . "
 " . t("Manage my subscriptions") . ": " . url("og_mailinglist/subscriptions", array('absolute' => TRUE)) . "
-" . t("Stop emails for this post") . ": " . url("og_mailinglist/unsubscribe/" . $node->nid, array("absolute" => TRUE));
+" . t("Stop emails for this post") . ": " . url("og_mailinglist/unsubscribe/" . $node->nid, array("absolute" => TRUE)) . "
+" . "
+" . "Stránka agendy o. z." . ": " . url("agenda_sk_v-pohybe", array('absolute' => TRUE));
 
   return $footer;
 }

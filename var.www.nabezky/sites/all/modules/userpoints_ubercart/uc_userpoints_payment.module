@@ -326,15 +326,14 @@ function uc_userpoints_payment_payment($order) {
  *
  */
 function uc_userpoints_payment_refund($order) {
-  global $user;
-  $curUserId = $user->uid;
+  $curUserId = $order->uid;
   $oid = $order->order_id;
   $result = db_query("SELECT uplog_id, points FROM {uc_up_payment_log} WHERE oid = %d and uid = %d", $oid, $curUserId);
   $orderTotal = $order->order_total;
 
   if ($result != FALSE) {
     $pointinfo = db_fetch_object($result);
-    $points = intval((($pointinfo->points) * (-1)));
+    $points = $pointinfo->points;
     $description  = 'User purchase (Ubercart Order ' . $order->order_id .') has been canceled.';
 
     db_query("DELETE FROM {uc_payment_receipts} WHERE method = 'Points' AND order_id = %d", $oid);

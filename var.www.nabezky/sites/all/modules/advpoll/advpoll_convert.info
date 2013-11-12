@@ -19,9 +19,9 @@ project = "advpoll"
 datestamp = "1323734635"
 
 
-; Information added by drupal.org packaging script on 2012-01-27
+; Information added by drupal.org packaging script on 2013-09-30
 version = "6.x-3.x-dev"
 core = "6.x"
 project = "advpoll"
-datestamp = "1327665703"
+datestamp = "1380553101"
 

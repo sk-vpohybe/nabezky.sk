@@ -248,7 +248,7 @@
                                 echo t('(!price each)', array('!price' => uc_price($price_info, $context)));
                               } ?>
                               <br />
-                              <?php echo t('SKU: ') . $product->model; ?><br />
+//                              <?php echo t('SKU: ') . $product->model; ?><br />
                               <?php if (is_array($product->data['attributes']) && count($product->data['attributes']) > 0) {?>
                               <?php foreach ($product->data['attributes'] as $attribute => $option) {
                                 echo '<li>'. t('@attribute: @options', array('@attribute' => $attribute, '@options' => implode(', ', (array)$option))) .'</li>';

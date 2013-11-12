@@ -29,7 +29,7 @@ function nabezky_theme(){
 
 /* adds link to the ubercart shopping cart page */
 function phptemplate_uc_empty_cart() {
-  return '<p><div id="continue-shopping-link"><a href="/catalog/43">'. t('Continue shopping') .'</a></div></p>';
+  return '<p><div id="continue-shopping-link" class="t637trashme"><a href="catalog">' . t('Continue shopping') . '</a></div></p>';
 }
 
 /**

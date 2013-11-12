@@ -1,0 +1,106 @@
+<?php
+// $Id: parser_kml.test,v 1.1.2.2 2008/12/05 23:23:21 alexb Exp $
+
+/**
+ * Test KML parser.
+ */
+
+class ParserKMLTestCase extends DrupalWebTestCase {
+  
+  /**
+   * Implementation of getInfo().
+   */
+  function getInfo() {
+    return array(
+      'name' => 'Parsing', 
+      'description' => 'Tests KML parser against a set of test feeds.', 
+      'group' => 'KML Parser');
+  }
+  
+  function setUp() {
+    parent::setUp('parser_kml', 'parser_common_syndication', 'feedapi');
+  }
+  
+  /**
+   * Unit test parsing with of test feeds.
+   * 
+   * @todo: Write some logic that loads kml files and assert definitions from tests/feeds.
+   * Feeds and definitions could even live outside of the Drupal CVS.
+   */
+  function testParsing() {
+    /*
+    $dir = drupal_get_path('module', 'parser_kml') .'/tests/feeds';
+    $feeds = file_scan_directory($dir, '.*');
+    foreach ($feeds as $feed) {
+      _testFeed($feed->filename);
+    }
+    */
+    $test_feed['count'] = 3;
+    $test_feed['url'] = url(drupal_get_path('module', 'parser_kml') .'/tests/feeds/test01.kml', array('absolute' => TRUE));
+    
+    // Define some values to assert.
+    $assert = $asserts = array();
+    $assert['path'] = array('items', 0, 'options', 'location', 'latitude', 0);
+    $assert['value'] = '12.3707163636';
+    $asserts[] = $assert;
+    $assert = array();
+    $assert['path'] = array('items', 1, 'options', 'original_url');
+    $assert['value'] = 'http://localhost/featureserver.py/cities/all.kml/cities/1506.kml';
+    $asserts[] = $assert;
+    $assert = array();
+    $assert['path'] = array('options', 'link');
+    $assert['value'] = $test_feed['url'];
+    $asserts[] = $assert;
+    
+    $this->_testFeed($test_feed, $asserts);
+
+    $test_feed['count'] = 0;
+    $test_feed['url'] = url(drupal_get_path('module', 'parser_kml') .'/tests/feeds/test03.kmz', array('absolute' => TRUE));
+
+    // Define some values to assert.
+    $assert = $asserts = array();
+    $assert['path'] = array('options', 'link');
+    $assert['value'] = $test_feed['url'];
+    $asserts[] = $assert;
+
+    $this->_testFeed($test_feed, $asserts);
+  }
+  
+  /**
+   * Unit test parser.
+   */
+  function _testFeed($test_feed, $asserts) {
+    $feed = parser_kml_parse($test_feed['url']);
+    $this->assertTrue(is_object($feed), 'Parsing successful'. $url);
+    $this->assertTrue(count($feed->items) == $test_feed['count'], 'Retrieved '. $test_feed['count'] .' items ');
+    
+    foreach ($asserts as $assert) {
+      $this->assertValueRecursive($feed, $assert['path'], $assert['value'], 'Found value '. $assert['value'] .' @ '. implode('/', $assert['path']), 'KML parser');
+    }
+  } 
+  
+  /**
+   * Assert a value on a specific position in an array or object or mixed.
+   */
+  function assertValueRecursive($data, &$path, $value, $message = '', $group = 'Other') {
+    $pos = array_shift($path);
+    if (is_object($data)) {
+      $data = $data->$pos;
+    }
+    elseif (is_array($data)) {
+      $data = $data[$pos];
+    }
+    else {
+      // Path invalid, bail out.
+      $path = array();
+      return $this->assertTrue(FALSE, 'path does not exist');
+    }
+    // Recurse into array until we hit bottom of $path.
+    if (count($path)) {
+      $this->assertValueRecursive($data, $path, $value, $message, $group);
+    }
+    else {
+      return $this->assertEqual($data, $value, $message, $group);
+    }
+  }
+}
