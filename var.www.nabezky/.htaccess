@@ -110,9 +110,17 @@ DirectoryIndex index.php
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteCond %{REQUEST_URI} !=/favicon.ico
+#  RewriteRule ^map-tiles/(.+)/(.+)/(.+)/(.+)\.png$ http://a.freemap.sk/data/layers/presets/$1/$2/$3/$4.png [L]
   RewriteRule ^(.*)$ index.php?q=$1 [L,QSA]
+
   RewriteCond %{HTTP_HOST} ^nabezky.sk [NC]
   RewriteRule ^(.*)$ http://www.nabezky.sk/$1 [L,R]
+
+  RewriteCond %{HTTP_HOST} ^stopa.nabezky.sk [NC]
+  RewriteRule ^(.*)$ http://www.nabezky.sk/projekt-stopa [L,R]
+
+  RewriteCond %{HTTP_HOST} ^skola.nabezky.sk [NC]
+  RewriteRule ^(.*)$ http://www.nabezky.sk/skola_bezeckeho_lyzovania [L,R]
 
 </IfModule>
 

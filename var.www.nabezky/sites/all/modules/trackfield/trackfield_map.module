@@ -2,9 +2,12 @@
 
 DEFINE('TRACKFIELD_MAP_PPLD_MAX', 46848);
 DEFINE('TRACKFIELD_MAP_ZOOM_MAX', 16);
+DEFINE('TRACKFIELD_STATIC_MAP_PATH', 'trackfield_map/static');
 
 global $trackfield_map_type_max_path_len;
 $trackfield_map_type_max_path_len = array(
+  'static_image' => 512,
+  'leaflet' => 512,
   'gmap' => 90,
   'gmap_static' => 45
 );
@@ -16,6 +19,15 @@ $trackfield_map_type_max_path_len = array(
 function trackfield_map_menu() {
   $items = array();
 
+  /* To plot static map */
+  $items[TRACKFIELD_STATIC_MAP_PATH] = array(
+    'type' => MENU_CALLBACK,
+    'access callback' => 'user_access',
+    'access arguments' => array('access content'),
+    /* TODO: handle arguments */ 
+    'file' => 'trackfield_map_static.inc',
+    'page callback' => '_trackfield_map_static_do_map');
+
   /* Admin menu */
   $access = user_access('administer trackfield');
   $items['admin/settings/trackfield/map'] = array(
@@ -24,7 +36,9 @@ function trackfield_map_menu() {
     'description' => t('Settings for trackfield maps.'),
     'access arguments' => array('administer trackfield'),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('_trackfield_map_admin'));
+    'page arguments' => array('_trackfield_map_admin'),
+    'file' => 'trackfield_map_admin.inc',
+  );
 
   return $items;
 }
@@ -144,6 +158,7 @@ function trackfield_map_theme() {
   /* For admin forms */ 
   $themes['trackfield_map_sizes_form'] = array(
     'arguments' => array('form' => NULL),
+    'file' => 'trackfield_map_admin.inc'
   );
 
   return $themes;
@@ -159,7 +174,7 @@ function trackfield_map_field_formatter_info() {
   return $formatters;
 }
 
-function _trackfield_map_optimise_for_gmap(&$item, $dlat, $dlon, $dx, $dy, $max) {
+function _trackfield_map_optimise_path(&$item, $dlat, $dlon, $dx, $dy, $max) {
   /*
    * Use Anthony Cartmell's implementation of Douglas-Peuker.
    * See: http://www.fonant.com/demos/douglas_peucker/algorithm
@@ -174,8 +189,8 @@ function _trackfield_map_optimise_for_gmap(&$item, $dlat, $dlon, $dx, $dy, $max)
   /*
    * Have a guess at tolerance.
    */
+  $tolerance = min($dlat, $dlon) / ($max * 4);
   $simple_line = $points;
-  $tolerance = max($dlat, $lon) / 150;
   while (count($simple_line) > $max) {
     $reducer = new PolylineReducer($points);
     $simple_line = $reducer->SimplerLine($tolerance);
@@ -187,30 +202,33 @@ function _trackfield_map_optimise_for_gmap(&$item, $dlat, $dlon, $dx, $dy, $max)
   for ($lp = 0; $lp < count($simple_line); $lp++) {
     $out_lat[] = $simple_line[$lp]->latitude;
     $out_lon[] = $simple_line[$lp]->longitude;
-    }
+  }
 
   $item['latitude'] = $out_lat;
   $item['longitude'] = $out_lon;
 }
 
 function _trackfield_map_field_theme($element) {
-  /*
-   * Look in the sizes array for definitions matchin the formatter.
-   */
-
-  $formatter = $element['#formatter'];
-  $out = '';
-  $trackfield_map_format_sizes = variable_get('trackfield_map_format_sizes', array());
-  foreach (array_keys($trackfield_map_format_sizes) as $fcheck) {
-    if ($fcheck == $formatter) {
-      /*
-       * Found the correct size - get lat/lon data and draw map.
-       */
-      $this_field_name = $element['#field_name'];
-      $field = content_fields($this_field_name);
-      $ref_field_name = $field['reference_field_name'];
-      $node = $element['#node'];
-      $delta = 0; /* TODO: multiple deltas */
+	/*
+	 * Look in the sizes array for definitions matchin the formatter.
+	 */
+	
+	$formatter = $element['#formatter'];
+	$out = '';
+	$trackfield_map_format_sizes = variable_get('trackfield_map_format_sizes', array());
+	foreach (array_keys($trackfield_map_format_sizes) as $fcheck) {
+		if ($fcheck == $formatter) {
+			/*
+			 * Found the correct size - get lat/lon data and draw map.
+			 */
+			$map_width = $trackfield_map_format_sizes[$formatter]['width'];
+			$map_height = $trackfield_map_format_sizes[$formatter]['height'];
+			
+			$this_field_name = $element['#field_name'];
+			$field = content_fields($this_field_name);
+			$ref_field_name = $field['reference_field_name'];
+			$node = $element['#node'];
+			$delta = 0; /* TODO: multiple deltas */
 			if ($node->op == 'Preview') {
 				/*
 				 * If this is a preview then the datasets should already be in
@@ -224,237 +242,236 @@ function _trackfield_map_field_theme($element) {
 				 * The datasets will not have automatically been loaded (for performance reasons),
 				 * so load them now.
 				 */
-        $result = db_query("SELECT settype, setdata from {trackfield_datasets} WHERE vid = %d and field_name = '%s' and delta = %d and settype in ('latitude', 'longitude')", $node->vid, $ref_field_name, $delta);
-        while ($sd = db_fetch_object($result)) {
-          $item[$sd->settype] = split(',', $sd->setdata);
-        }
+				$result = db_query("SELECT settype, setdata from {trackfield_datasets} WHERE vid = %d and field_name = '%s' and delta = %d and settype in ('latitude', 'longitude')", $node->vid, $ref_field_name, $delta);
+				while ($sd = db_fetch_object($result)) {
+					$item[$sd->settype] = split(',', $sd->setdata);
+				}
 			}
-
-      /* Should we be showing a map too? */
-      if (isset($item) && array_key_exists('latitude', $item) && array_key_exists('longitude', $item)) {
-        $points = count($item['latitude']);
-        /* Markers for start/finish */
-        $markers = sprintf(" |markers=route::%f,%f + %f,%f",
-          $item['latitude'][0], $item['longitude'][0],
-          $item['latitude'][$points - 1], $item['longitude'][$points - 1]);
-
-        /* Find bounds of lat/lon for map */
-        $lat_min = 90; $lat_max = -90;
-        $lon_min = 180; $lon_max = -180;
-        for ($lp = 0; $lp < $points; $lp++) {
-          if ($item['latitude'][$lp] < $lat_min) { $lat_min = $item['latitude'][$lp]; }
-          if ($item['latitude'][$lp] > $lat_max) { $lat_max = $item['latitude'][$lp]; }
-          if ($item['longitude'][$lp] < $lon_min) { $lon_min = $item['longitude'][$lp]; }
-          if ($item['longitude'][$lp] > $lon_max) { $lon_max = $item['longitude'][$lp]; }
-        }
-        
-        /* Figure out zoom */
-        $gmap_width = $trackfield_map_format_sizes[$formatter]['width'];
-        $gmap_height = $trackfield_map_format_sizes[$formatter]['height'];
-        $lon_degs = $lon_max - $lon_min;
-        $lat_degs = $lat_max - $lat_min;
-        $pixelsPerLonDegree = TRACKFIELD_MAP_PPLD_MAX;
-        $zoom = TRACKFIELD_MAP_ZOOM_MAX;
-        while ($zoom > 1) {
-          /* TODO: handle lat properly */
-          if ($lon_degs * $pixelsPerLonDegree < $gmap_width &&
-              $lat_degs * $pixelsPerLonDegree < $gmap_height) break;
-
-          $zoom--;
-          $pixelsPerLonDegree /= 2;
-        }
-        $map_centre = sprintf('%f,%f',  $lat_min + ($lat_max - $lat_min) / 2, $lon_min + ($lon_max - $lon_min) / 2);
-
-        /* Too many points is bad, remove redundant ones */
-        global $trackfield_map_type_max_path_len;
-        $max_path_len = $trackfield_map_type_max_path_len[$trackfield_map_format_sizes[$formatter]['type']];
-        if ($points > $max_path_len) {
-          _trackfield_map_optimise_for_gmap($item, $lat_max - $lat_min, $lon_max - $lon_min,  $gmap_width, $gmap_height, $max_path_len);
-        }
-        $line_points = array();
-        for ($lp = 0; $lp < count($item['latitude']); $lp++) {
-          /* 5DP is 1m accuracy at equator */
-          $line_points[] = sprintf("%.5f,%.5f", $item['latitude'][$lp], $item['longitude'][$lp]);
-        }
-
-        /* TODO: these should be attributes of formatter */
-        $path_colour = '0000bb';
-        $path_width = 2;
-        $path_opacity = 50;
-
-        if ($trackfield_map_format_sizes[$formatter]['type'] == 'gmap_static') {
-          $path = sprintf('&path=rgb:0x%s,weight:%d|%s',
-            $path_colour,
-            $path_width,
-            join('|', $line_points));
-          $static_src = sprintf('http://maps.google.com/staticmap?zoom=%d&center=%s&size=%dx%d%s&key=%s',
-            $zoom,
-            $map_centre,
-            $gmap_width, $gmap_height,
-            $path,
-            variable_get('googlemap_api_key', ''));
-          $out .= sprintf('<img src="%s" alt="map" title="map" width="%d" height="%d"/>',
-            $static_src,
-            $gmap_width, $gmap_height);
-        } else {
-          /* Default is gmap embedded */
-          $path = sprintf(' |line=#%s/%d/%d:%s', $path_colour, $path_width, $path_opacity, join(' + ', $line_points));
-          $gmap = sprintf('[gmap zoom=%d |center=%s |width=%dpx |height=%dpx |id=%s %s%s%s]',
-            $zoom,
-            $map_centre,
-            $gmap_width, $gmap_height,
-            "trackfield_map_" . $node->nid . "_$formatter",
-            $trackfield_map_format_sizes[$formatter]['gmap_attr'],
-            $path,
-            $markers);
-
-          _gmap_doheader();
-          $out .= gmap_filter('process', 0, 1, $gmap);
-        }
-      }
-      break;
-    }
-  }
-
-  return $out;
+			
+			/* Should we be showing a map too? */
+			if (isset($item) && array_key_exists('latitude', $item) && array_key_exists('longitude', $item)) {
+				if ($trackfield_map_format_sizes[$formatter]['type'] == 'static_image' ) {
+					/*
+					 * Static map is a little different, so just pass in the item and let it handle everything.
+					 */
+					$out .= sprintf('<img width="%d" height="%d" src="/trackfield_map/static/%d,%d,%s/%s" title="%s" alt="%s">',
+						$map_width, $map_height, $node->nid, $node->vid, $ref_field_name, $formatter, $node->node_title, $node->node_title);
+				} else {
+					/*
+					 * The other map drawing methods have some common processing, so included here.
+					 */
+					
+					/* Find bounds of lat/lon for map */
+					$bounds = _trackfield_map_find_bounds($item);
+					
+					/* Figure out zoom */
+					$zoom = _trackfield_map_find_zoom($bounds, $map_width, $map_height);
+					$map_centre = _trackfield_map_find_centre($bounds);
+					
+					global $trackfield_map_type_max_path_len;
+					$max_path_len = $trackfield_map_type_max_path_len[$trackfield_map_format_sizes[$formatter]['type']];
+					$line_points = _trackfield_map_get_points($item, $bounds, $map_width, $map_height, $max_path_len);        
+					
+					/* TODO: these should be attributes of formatter */
+					$path_colour = '0000bb';
+					$path_width = 2;
+					$path_opacity = 50;
+					$path_id = "trackfield_map_$node->nid";
+					
+					if ($trackfield_map_format_sizes[$formatter]['type'] == 'gmap_static') {
+						$path = sprintf('&path=rgb:0x%s,weight:%d|%s',
+							$path_colour,
+							$path_width,
+							join('|', $line_points));
+						$static_src = sprintf('http://maps.google.com/staticmap?zoom=%d&center=%s&size=%dx%d%s&key=%s',
+							$zoom,
+							$map_centre,
+							$map_width, $map_height,
+							$path,
+							variable_get('googlemap_api_key', ''));
+						$out .= sprintf('<img src="%s" alt="map" title="map" width="%d" height="%d"/>',
+							$static_src,
+							$map_width, $map_height);
+					} else if ($trackfield_map_format_sizes[$formatter]['type'] == 'gmap' && module_exists('gmap')) {
+						/* Markers for start/finish */
+						$markers = sprintf(" |markers=route::%s + %s",
+							$line_points[0], end($line_points));
+						
+						/* Default is gmap embedded */
+						$path = sprintf(' |line=#%s/%d/%d:%s', $path_colour, $path_width, $path_opacity, join(' + ', $line_points));
+						$gmap = sprintf('[gmap zoom=%d |center=%s |width=%dpx |height=%dpx |id=%s %s%s%s]',
+							$zoom,
+							$map_centre,
+							$map_width, $map_height,
+							$path_id,
+							$trackfield_map_format_sizes[$formatter]['gmap_attr'],
+							$path,
+							$markers);
+						
+						_gmap_doheader();
+						$out .= gmap_filter('process', 0, 1, $gmap);
+					} else if ($trackfield_map_format_sizes[$formatter]['type'] == 'leaflet' ) {
+						drupal_add_js('.' . base_path() . 'sites/all/libraries/leaflet/leaflet.js');
+						drupal_add_css('sites/all/libraries/leaflet/leaflet.css');
+						$out .= sprintf('<div id="map" style="width: %dpx;height: %dpx"></div>', $map_width, $map_height);
+						$out .= "<script>" .
+							sprintf("var map = L.map('map').setView([%s], %d);", $map_centre, $zoom) .
+							sprintf("var %s = L.polyline([[%s]], {color: 'red', opacity: '1', weight: 3}).addTo(map);", $path_id, join('],[', $line_points)) .
+							_trackfield_map_leaflet_layers() .
+							"</script>";
+					}
+				}
+			}
+			break;
+		}
+	}
+	
+	return $out;
 }
 
-function _trackfield_map_admin() {
-  $trackfield_format_sizes = variable_get('trackfield_map_format_sizes', array());
-  /* Add a blank line for new entries */
-  $trackfield_format_sizes[''] = array();
-  
-  $form['sizes'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Map sizes'),
-    '#tree' => TRUE,
-    '#theme' => 'trackfield_map_sizes_form',
-    '#description' => t('Various size mapping options are available whenever these are shown (in teaser, full node, views, etc). Define the possible choices required here.')
-  );
+/*
+ * Leaflet layers
+ */
 
-  $lp = 0;
-  foreach ($trackfield_format_sizes as $key => $config) {
-    $form['sizes'][$lp]['del'] = array(
-      '#type' => 'checkbox',
-    );
-    $form['sizes'][$lp]['label'] = array(
-      '#type' => 'textfield',
-      '#default_value' => $key,
-      '#size' => 15,
-      '#maxlength' => 32,
-    );
-    $form['sizes'][$lp]['width'] = array(
-      '#type' => 'textfield',
-      '#default_value' => $config['width'],
-      '#size' => 4,
-      '#maxlength' => 5,
-    );
-    $form['sizes'][$lp]['height'] = array(
-      '#type' => 'textfield',
-      '#default_value' => $config['height'],
-      '#size' => 4,
-      '#maxlength' => 5,
-    );
-    $form['sizes'][$lp]['type'] = array(
-      '#type' => 'select',
-      '#default_value' => $config['type'],
-      '#options' => array('gmap_static' => 'gmap_static', 'gmap' => 'gmap'),
-    );
-    $form['sizes'][$lp]['gmap_attr'] = array(
-      '#type' => 'textfield',
-      '#default_value' => $config['gmap_attr'],
-      '#size' => 32,
-      '#maxlength' => 128,
-    );
-    $lp++;
-  }
-  
-  $form['buttons']['submit'] = array('#type' => 'submit', '#value' => t('Save configuration') );
-  $form['buttons']['delete'] = array('#type' => 'submit', '#value' => t('Delete Selected'));
-  $form['#submit'] = array('trackfield_map_sizes_submit');
-  $form['#validate'] = array('trackfield_map_sizes_validate');
+function _trackfield_map_leaflet_layers($control = 'L.Control.Layers') {
+	/*
+	 * Add Google Layers using plugin.
+	 * 
+	 */
+	 drupal_add_js('.' . base_path() . 'sites/all/libraries/leaflet-plugins/layer/tile/Google.js');
+	 drupal_set_html_head('<script src="http://maps.google.com/maps/api/js?v=3&sensor=false"></script>');
 
-  return $form;
+	/*
+	 * TODO: make this configurable.
+	 */
+	return
+		   "if (customOverlays === undefined) { customOverlays = {}; }\n" . 
+           "L.control.scale({'imperial':false}).addTo(map);" .
+           "var ocm = L.tileLayer('//{s}.tile.opencyclemap.org/cycle/{z}/{x}/{y}.png', {attribution: 'Thunderforest \u003Ca target=\u0022attr\u0022 href=\u0022http:\u002F\u002Fthunderforest.com\u0022\u003EOpenCycleMap\u003C\u002Fa\u003E. Map data \u0026copy; \u003Ca target=\u0022attr\u0022 href=\u0022http:\u002F\u002Fopenstreetmap.org\u0022\u003EOpenStreetMap\u003C\u002Fa\u003E and contributors', maxZoom:17});" .
+           "var est = L.tileLayer('//server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}.png', {attribution: 'Tiles \u0026copy; \u003Ca target=\u0022attr\u0022 href=\u0022http:\u002F\u002Fesri.com\u0022\u003EEsri\u003C\u002Fa\u003E', maxZoom:18});" .
+           
+# Old method of adding Google layers:           
+#           "var ggs = L.tileLayer('//khm{s}.googleapis.com/kh?v=125&x={x}&y={y}&z={z}', {attribution: 'Map data \u0026copy; \u003Ca target=\u0022attr\u0022 href=\u0022http:\u002F\u002Fgooglemaps.com\u0022\u003EGoogle\u003C\u002Fa\u003E', subdomains: [ 0, 1, 2, 3 ], maxZoom:18});" .
+#           "var ggt = L.tileLayer('//mt{s}.googleapis.com/vt?lyrs=t,r&x={x}&y={y}&z={z}', {attribution: 'ATTR', subdomains: [ 0, 1, 2, 3 ], maxZoom:15});" .
+#           "var ggm = L.tileLayer('//mt{s}.googleapis.com/vt?x={x}&y={y}&z={z}', {attribution: 'Map data \u0026copy; \u003Ca target=\u0022attr\u0022 href=\u0022http:\u002F\u002Fgooglemaps.com\u0022\u003EGoogle\u003C\u002Fa\u003E', subdomains: [ 0, 1, 2, 3 ], maxZoom:18});" .
+		   "var ggs = new L.Google('SATELLITE');" .
+		   "var ggm = new L.Google('ROADMAP');" .
+		   "var layerControl = new $control( {'OSM Cycle':ocm, 'Esri Topo':est, 'Google Satellite':ggs, 'Google Road':ggm}, customOverlays);" .
+           "map.addControl(layerControl);" .
+           /* This controls the default layer */
+           "est.addTo(map);";
 }
 
-function theme_trackfield_map_sizes_form(&$form) {
-  $header = array(t('Del'), t('Label'), t('Width'), t('Height'), t('Type'), t('Attributes'));
-  foreach (element_children($form) as $key) {
-    $row = array();
-    $row[] = drupal_render($form[$key]['del']);
-    $row[] = drupal_render($form[$key]['label']);
-    $row[] = drupal_render($form[$key]['width']);
-    $row[] = drupal_render($form[$key]['height']);
-    $row[] = drupal_render($form[$key]['type']);
-    $row[] = drupal_render($form[$key]['gmap_attr']);
-    $rows[] = $row;
-  }
-  $output .= theme('table', $header, $rows);
-  $output .= drupal_render($form);
+/*
+ * Find bounds of lat/lon for map
+ */
 
-  return $output;
+function _trackfield_map_merge_bounds($bounda, $boundb) {
+	if (!isset($bounda) || !is_array($bounda) || count($bounda) != 4) {
+		return $boundb;
+	} else if (!isset($boundb) || !is_array($boundb) || count($boundb) != 4) {
+		return $bounda;
+	}
+	
+	list($lata_min, $lona_min, $lata_max, $lona_max) = $bounda;
+	list($latb_min, $lonb_min, $latb_max, $lonb_max) = $boundb;
+
+	return array(min($lata_min, $latb_min), min($lona_min, $lonb_min), max($lata_max, $latb_max), max($lona_max, $lonb_max));
 }
 
-function trackfield_map_sizes_validate($form, &$form_state) {
-  /* Don't bother if just deleting what is marked */
-  if ($form_state['values']['op'] == t('Delete Selected')) return;
-
-  foreach ($form_state['values']['sizes'] as $key => $config) {
-    /* Only check if not empty */
-    if (!empty($config['label'])) {
-      /* width/height/weight must be > 0 */
-      if ($config['width'] < 1) {
-        form_set_error("sizes][$key][width", t('Width must be a positive integer.'));
-      }
-      if ($config['height'] < 1) {
-        form_set_error("sizes][$key][height", t('Height must be a positive integer.'));
-      }
-    }
-  }
+function _trackfield_map_find_bounds($item, $degrees_padding = 0) {
+	/* Maybe this item already has bounds? */
+	if (is_object($item)) {
+		if (is_array($item->boundary)) {
+			$out = $item->boundary;
+		} else {
+			$latitude = $item->latitude;
+			$longitude = $item->longitude;
+		}
+	} else if (is_array($item)) {
+	if (array_key_exists('boundary', $item)) {
+		$out = $item['boundary'];
+	} else {
+			$latitude = $item['latitude'];
+			$longitude = $item['longitude'];
+		}
+	}
+	
+	if (!isset($out)) {
+		$points = count($latitude);
+		
+		$lat_min = 90; $lat_max = -90;
+		$lon_min = 180; $lon_max = -180;
+		for ($lp = 0; $lp < $points; $lp++) {
+			if ($latitude[$lp] < $lat_min) { $lat_min = $latitude[$lp]; }
+			if ($latitude[$lp] > $lat_max) { $lat_max = $latitude[$lp]; }
+			if ($longitude[$lp] < $lon_min) { $lon_min = $longitude[$lp]; }
+			if ($longitude[$lp] > $lon_max) { $lon_max = $longitude[$lp]; }
+		}
+		
+		$out = array($lat_min, $lon_min, $lat_max, $lon_max);
+	}
+	
+	/*
+	 * Pad if required.
+	 */
+	 if (isset($out) && $degrees_padding != 0) {
+		$dlat = $out[2] - $out[0];
+		$dlon = $out[3] - $out[1];
+ 
+		$margin_degrees = max($dlat, $dlon) * $degrees_padding / 2;
+		
+		$out = array(
+			$out[0] - $margin_degrees,
+			$out[1] - $margin_degrees,
+			$out[2] + $margin_degrees,
+			$out[3] + $margin_degrees
+		);
+	 }
+	
+	return $out;
 }
 
-function trackfield_map_sizes_submit($form, &$form_state) {
-  if ($form_state['values']['op'] == t('Delete Selected')) {
-    /* Load the settings and remove the ones checked for delete */
-    $deleted = 0;
-    $trackfield_format_sizes = variable_get('trackfield_map_format_sizes', array());
-    foreach ($form_state['values']['sizes'] as $config) {
-      if ($config['del']) {
-        $key = $config['label'];
-        if (array_key_exists($key, $trackfield_format_sizes)) {
-          unset($trackfield_format_sizes[$key]);
-          $deleted++;
-        }
-      }
-    }
-    if ($deleted) {
-      variable_set('trackfield_map_format_sizes', $trackfield_format_sizes);
-      drupal_set_message(t('@deleted configuration value@s deleted.', array('@deleted' => $deleted, '@s' => $deleted > 1 ? 's' : '')));
-      /* Clear CCK cache to pick up changed sizes */
-      content_clear_type_cache();
-    } else {
-      drupal_set_message(t('No valid options to delete.'));
-    }
+function _trackfield_map_find_zoom($bounds, $width, $height) {
+	list($lat_min, $lon_min, $lat_max, $lon_max) = $bounds;
 
-  } else {
-    /* Simply build array based on form_values and save it */
-    $trackfield_format_sizes = array();
-    foreach ($form_state['values']['sizes'] as $lp => $config) {
-      if (!empty($config['label'])) {
-        $key = $config['label'];
-        /* Remove items we don't need to save */
-        unset($config['del']);
-        unset($config['label']);
-        /* And change margins to array */
-        $trackfield_format_sizes[$key] = $config;
-      }
-    }
-    variable_set('trackfield_map_format_sizes', $trackfield_format_sizes);
-    
-    /* Clear CCK cache to pick up changed sizes */
-    content_clear_type_cache();
+    $lon_degs = $lon_max - $lon_min;
+    $lat_degs = $lat_max - $lat_min;
+    $pixelsPerLonDegree = TRACKFIELD_MAP_PPLD_MAX;
+    $zoom = TRACKFIELD_MAP_ZOOM_MAX;
+    while ($zoom > 1) {
+      /* TODO: handle lat properly */
+      if ($lon_degs * $pixelsPerLonDegree < $width &&
+          $lat_degs * $pixelsPerLonDegree < $height) break;
 
-    drupal_set_message(t('The configuration options have been saved.'));
-  }
+      $zoom--;
+      $pixelsPerLonDegree /= 2;
+    }
+    return $zoom;
 }
-?>
+
+function _trackfield_map_find_centre($bounds) {
+  list($lat_min, $lon_min, $lat_max, $lon_max) = $bounds;
+	
+  return sprintf('%f,%f',  $lat_min + ($lat_max - $lat_min) / 2, $lon_min + ($lon_max - $lon_min) / 2);
+}
+
+/*
+ * Remove rendundant points (if any) and return string array point pairs.
+ */
+
+function _trackfield_map_get_points($item, $bounds, $map_width, $map_height, $max_path_len) {
+	$points = count($item['latitude']);        
+  list($lat_min, $lon_min, $lat_max, $lon_max) = $bounds;
+	
+	if ($points > $max_path_len) {
+		_trackfield_map_optimise_path($item, $lat_max - $lat_min, $lon_max - $lon_min,  $map_width, $map_height, $max_path_len);
+	}
+	$line_points = array();
+	for ($lp = 0; $lp < count($item['latitude']); $lp++) {
+		/* 5DP is 1m accuracy at equator */
+		$line_points[] = sprintf("%.5f,%.5f", $item['latitude'][$lp], $item['longitude'][$lp]);
+	}
+
+	return $line_points;
+}        

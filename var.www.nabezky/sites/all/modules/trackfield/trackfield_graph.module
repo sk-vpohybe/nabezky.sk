@@ -23,14 +23,14 @@ DEFINE('TRACKFIELD_GRAPHDATA_PATH', 'trackfield_graph/graphdata');
   if ($phase == 'runtime') {
     /* Check to make sure at least one graphing library is installed in the right place */
     $graphs_ok = array();
-    if (file_exists(drupal_get_path('module', 'trackfield') .'/jpgraph/src/jpgraph.php')) {
-      include_once(drupal_get_path('module', 'trackfield') .'/jpgraph/src/jpgraph.php');
+    if (file_exists('./sites/all/libraries/jpgraph/src/jpgraph.php')) {
+      include_once('./sites/all/libraries/jpgraph/src/jpgraph.php');
       if (defined('JPG_VERSION')) {
         $graphs_ok[] = t('JpGraph server side graphing library, version %version seems to be installed.', array('%version' => JPG_VERSION));
       }
     }
     if (file_exists(drupal_get_path('module', 'trackfield') . '/jqplot/jquery.jqplot.min.js')) {
-      $graphs_ok[] = t('jqPlot Javascript graphing plugin seems to be available.');
+      $graphs_ok[] = t('jqPlot Javascript graphing plugin seems to be installed.');
     }
     
     if (count($graphs_ok) > 0) {
@@ -236,10 +236,12 @@ function _trackfield_graph_render($formatter, $args, $normalise) {
     /* Render with jqplot */
     $id = 'trackfield_jqplot_' . $jqplot_ids++;
 
-    drupal_add_js(drupal_get_path('module', 'trackfield') . '/jqplot/jquery.jqplot.min.js');
-    drupal_add_js(drupal_get_path('module', 'trackfield') . '/jqplot/plugins/jqplot.categoryAxisRenderer.js');
-    drupal_add_js(drupal_get_path('module', 'trackfield') . '/jqplot/plugins/jqplot.cursor.js');
-    drupal_add_js(drupal_get_path('module', 'trackfield') . '/jqplot/plugins/jqplot.highlighter.js');
+	drupal_add_js(base_path() . 'sites/all/libraries/jqplot/jquery.jqplot.min.js');
+    drupal_add_js(base_path() . 'sites/all/libraries/jqplot/jquery.jqplot.min.js');
+    drupal_add_js(base_path() . 'sites/all/libraries/jqplot/plugins/jqplot.categoryAxisRenderer.js');
+    drupal_add_js(base_path() . 'sites/all/libraries/jqplot/plugins/jqplot.cursor.js');
+    drupal_add_js(base_path() . 'sites/all/libraries/jqplot/plugins/jqplot.highlighter.js');
+
     drupal_add_css(drupal_get_path('module', 'trackfield') . '/trackfield_jqplot.css');
     drupal_add_js(drupal_get_path('module', 'trackfield') . '/trackfield_jqplot.js');
     $settings = array(
@@ -340,7 +342,7 @@ function _trackfield_graph_graphargs() {
 }
 
 function _trackfield_graph_do_graph() {
-  include_once(drupal_get_path('module', 'trackfield') .'/trackfield_graph.inc');
+  require_once(drupal_get_path('module', 'trackfield') .'/trackfield_graph.inc');
   _trackfield_graph(_trackfield_graph_graphargs());
 }
 
@@ -352,7 +354,7 @@ function _trackfield_graph_do_graph() {
  */
 
 function _trackfield_graph_do_graphdata_jqplot() {
-  include_once(drupal_get_path('module', 'trackfield') .'/trackfield_graph.inc');
+  require_once(drupal_get_path('module', 'trackfield') .'/trackfield_graph.inc');
   $graphargs = _trackfield_graph_graphargs();
   $graphdata = _trackfield_graph_get_graphdata($graphargs);
 //  print_r($graphdata);exit;
@@ -454,7 +456,7 @@ function _trackfield_graph_do_graphdata_jqplot() {
 }
 
 function _trackfield_graph_do_graphdata() {
-  include_once(drupal_get_path('module', 'trackfield') .'/trackfield_graph.inc');
+  require_once(drupal_get_path('module', 'trackfield') .'/trackfield_graph.inc');
   $graphdata = _trackfield_graph_get_graphdata(
     _trackfield_graph_graphargs(),
     array('distance','altitude','latitude','longitude'));
@@ -480,7 +482,7 @@ function _trackfield_graph_do_graphdata() {
  * Admin page below here.
  */
 
-include_once(drupal_get_path('module', 'trackfield') .'/jpgraph/src/jpgraph_ttf.inc.php');
+include_once('./sites/all/libraries/jpgraph/src/jpgraph_ttf.inc.php');
 
 function _trackfield_is_fixed_jpgraph_font($font) {
   if ($font == FF_FONT0 ||
@@ -649,7 +651,7 @@ function _trackfield_graph_admin() {
   return $form;
 }
 
-function theme_trackfield_graph_sizes_form(&$form) {
+function theme_trackfield_graph_sizes_form($form) {
   $header = array(t('Del'), t('Label'), t('Renderer'), t('Width'), t('Height'), t('Axis'), t('Legend'), t('Line'), t('Margins'), t('Font'), t('Size'), t('Resample'));
   foreach (element_children($form) as $key) {
     $row = array();
@@ -673,7 +675,7 @@ function theme_trackfield_graph_sizes_form(&$form) {
   return $output;
 }
 
-function theme_trackfield_graph_cols_form(&$form) {
+function theme_trackfield_graph_cols_form($form) {
   $header = array(t('Del'), t('Label'), t('Line'), t('Fill'));
   foreach (element_children($form) as $key) {
     $row = array();

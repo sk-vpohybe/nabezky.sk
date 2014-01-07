@@ -18,15 +18,15 @@ This extension only runs on PHP 5+.
 Installation
 ------------
 
-Place the entiry trackfield directory in your Drupal modules directory.
+Place the entire trackfield directory in your Drupal modules directory.
 
 trackfield_graph required the JpGraph package. This can be downloaded
 from:
 
 http://www.aditus.nu/jpgraph/
 
-Place the entire JpGraph package in the trackfield directory or symlink
-to whereever you put it. The directory or symlink must be named
+Place the entire JpGraph package in the sites/all/libraries directory or
+symlink to whereever you put it. The directory or symlink must be named
 'jpgraph'.
 
 Version 2+ of JpGraph is required, which only runs on PHP 5+.

@@ -1,0 +1,9 @@
+<?php
+
+function uc_conditional_payment_update_6000() {
+  $ret = array();
+
+  $ret[] = update_sql("UPDATE {ca_predicates} SET ca_trigger = 'allow_payment_method' WHERE ca_trigger LIKE 'allow_payment_method_%'");
+
+  return $ret;
+}

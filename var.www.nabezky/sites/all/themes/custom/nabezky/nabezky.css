@@ -708,7 +708,7 @@ ul.secondary li.active a {
  * Nodes & comments
  */
 .node {
-    border-top: thin solid blue;
+    border-top: thin solid #027AC6;
     margin-bottom: 10px;
     padding: 10px;
 }
@@ -893,7 +893,7 @@ fieldset {
 }
 
 fieldset.group-snow-situation {
-	width: 285px;
+    width: 305px;
 }
 
 .views-label {
@@ -1643,7 +1643,7 @@ div.view-za-snehom div.view-footer table tbody {
 }
 
 #popup_GroupDiv {
-    opacity: 0.82;
+    opacity: 0.95;
 }
 
 div.comment div.clear-block div.content p {
@@ -1804,7 +1804,7 @@ div.view-sponsor-list div.view-header {
 }
 
 div.view-snow-reports div.view-content table.views-table tbody tr.odd td {
-    white-space: nowrap;
+    white-space: normal;
 }
 
 .view-snow-reports {
@@ -1822,11 +1822,22 @@ div.view-snow-reports div.view-content table.views-table tbody tr.odd td {
 .views-field-field-date-value {
     width: 70px;
 }
+
 div.view-snow-reports div.view-content table.views-table tbody tr.odd td.views-field-field-snow-type-value {
+    white-space: normal;
     width: 105px;
 }
 
-div.view-snow-reports div.view-content table.views-table tbody tr.odd td.views-field-field-trail-conditions-value {
+div.view-snow-reports div.view-content table.views-table tbody tr.odd td.views-field-name {
+    white-space: normal;
+}
+
+div.view-snow-reports div.view-content table.views-table tbody tr.odd td.views-field-title {
+    white-space: normal;
+}
+
+
+div.view-snow-reports div.view-content table.views-table tbody tr td.views-field-field-trail-conditions-value {
     width: 100px;
 }
 
@@ -1863,11 +1874,13 @@ div.view-ski-center-updates div.view-content table.views-table tbody tr td.views
     padding-top: 11px;
     vertical-align: top;
     white-space: nowrap;
+    width: 169px;
 }
 
 div.view-ski-center-updates div.view-content table.views-table tbody tr.odd td.views-field-changed {
     padding-top: 11px;
     vertical-align: top;
+    width: 75px;
 }
 
 div.field-field-gpx-file {
@@ -1970,4 +1983,54 @@ view-item div.calendar.3526.field_class_date.0.0 div.view-data-node-title {
 .calendar-calendar div.month-view table tbody tr td div.inner div.view-item div div.view-data-node-title a {
     color: #027AC6;
     font-weight: bold;
+}
+
+div.field-field-probl-miesto-stav div div {
+    color: red;
+    font-size: 12pt;
+}
+
+div.field-field-probl-miesto-stav div div div {
+    color: black;
+    font-size: 9pt;
+}
+
+fieldset.group-snow-situation div.form-radios div.form-item {
+    display: inline;
+    margin-right: -15px;
+}
+
+/* styles for the "kurz" ubercart product */
+.product-price {
+    font-size: 20px;
+    font-weight: bold;
+    height: 10px;
+    text-align: right;
+}
+
+.ski-centers {
+    display: inline-block;
+    padding-bottom: 11px;
+    vertical-align: text-top;
+}
+
+div.view-civicitelia-bezeckeho-lyzovania div div.views-row {
+    border-bottom: thin solid #027AC6;
+    margin-top: 10px;
+    min-height: 100px;
+    padding: 5px;
+}
+
+div.view-clanky-z-webu div.view-content div.views-row div.views-field-nothing-1 {
+    margin-bottom: 14px;
+    margin-top: -9px;
+}
+
+div.view-clanky-z-webu div.view-content div.views-row div.views-field-nothing {
+    font-weight: bold;
+}
+
+.groups {
+    clear: left;
+    padding-top: 25px;
 }

@@ -85,7 +85,7 @@ function options_element_elements() {
   $type['options'] = array(
     '#input' => TRUE,
     '#process' => array('form_options_expand'),
-    '#limit' => 100,
+    '#limit' => NULL,
     '#optgroups' => TRUE,
     '#multiple' => FALSE,
     '#options' => array(),

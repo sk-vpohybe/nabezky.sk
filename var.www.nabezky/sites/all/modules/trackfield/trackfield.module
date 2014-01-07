@@ -126,6 +126,14 @@ function trackfield_field_settings($op, $field) {
   }
 }
 
+function _trackfield_field_item_dataset(&$item, $settype, $setdata) {
+  $item[$settype] = join(',', $setdata);
+  if (array_key_exists('trackdatasets', $item)) {
+    $item['trackdatasets'] .= ",$settype";
+  } else {
+    $item['trackdatasets'] = $settype;
+  }
+}
 
 function trackfield_field($op, &$node, $field, &$items, $teaser, $page) {
   switch ($op) {
@@ -568,5 +576,3 @@ function _trackfield_admin_units() {
   );
   return system_settings_form($form);
 }
-
-?>

@@ -2,7 +2,8 @@
 
 /* Where we will store our cached graphs */
 DEFINE('TRACKFIELD_GRAPH_CACHE_PATH', 'trackfield_cache');
-
+ /* HTTP cache expires in one month */
+DEFINE('TRACKFIELD_EXPIRES_OFFSET', 60*60*24*30);
 /* So JpGraph knows where to find TTF */
 DEFINE('TTF_DIR', variable_get('trackfield_graph_ttf_path', ''));
 
@@ -122,8 +123,6 @@ EOF;
         /* Reverse if necessary */
         if ($reverse) {
           $oneset[$yset] = array_reverse($oneset[$yset]);
-//          if (array_key_exists('latitude', $oneset)) { $oneset['latitude'] = array_reverse($oneset['latitude']); }
-//          if (array_key_exists('longitude', $oneset)) { $oneset['longitude'] = array_reverse($oneset['longitude']); }
           /* X axis is a bit different */
           $tmp_arr = array();
           $one_dst_max = $oneset[$xset][$points - 1];
@@ -166,12 +165,10 @@ EOF;
       for ($lp = 1; $lp < count($graphargs['items']); $lp++) {
         $yset = $graphargs['items'][$lp]['yset'];
         /* TODO: figure out when is best to overwrite title */        
-//        $dataset[$lp]['title'] = $yset;
         $set_min = min($dataset[$lp][$yset]);
         $set_max = max($dataset[$lp][$yset]);
         $set_range = $set_max - $set_min;
         $set_scale = $set_range / $base_range;
-//        print "$yset - $set_min, $set_max, $set_range, $set_scale";
         for ($lp2 = 0; $lp2 < count($dataset[$lp][$yset]); $lp2++) {
           $dataset[$lp][$yset][$lp2] -= $set_min;
           $dataset[$lp][$yset][$lp2] /= $set_scale;
@@ -197,7 +194,7 @@ EOF;
  * Function to return cache file name/path for give args.
  */
 
-function _trackfield_graph_cache_file($graphargs) {
+function _trackfield_graph_cache_file($basedir, $graphargs) {
   $formatter = $graphargs['formatter'];
   $normal_type = $graphargs['normal_type'];
   
@@ -211,7 +208,7 @@ function _trackfield_graph_cache_file($graphargs) {
                   $item['yset'];
   }
   
-  $cache_dir = file_directory_path() . '/' . TRACKFIELD_GRAPH_CACHE_PATH;
+  $cache_dir = file_directory_path() . '/' . $basedir;
   /* Make sure the directory exists - file_create_path will fail if not */
   if (!is_dir($cache_dir)) { mkdir($cache_dir); }
   
@@ -223,22 +220,10 @@ function _trackfield_graph_cache_file($graphargs) {
 }
 
 /*
- * This is the main graphing function.
+ * We want to regen if this file changes due to rules...
+ * Or if the formatter config changed
  */
-
-function _trackfield_graph($graphargs) {
-  /* Load config */
-  $trackfield_format_sizes = variable_get('trackfield_graph_format_sizes', array());
-  $trackfield_format_cols = variable_get('trackfield_graph_format_cols', array());
-  $formatter = $graphargs['formatter'];
-  $config = $trackfield_format_sizes[$formatter];
-
-  /*
-   * We want to regen if this file changes due to rules...
-   * Or if the formatter config changed
-   */
-  $modified = max(filemtime(__FILE__), $config['timestamp']);
-  $expires_offset = 60*60*24*30; /* HTTP cache expires in one month */
+function _trackfield_graph_check_modified($graphargs, $modified) {
 
   foreach ($graphargs['items'] as $item) {
     /* Find when these nodes were last changed for caching */
@@ -266,13 +251,13 @@ function _trackfield_graph($graphargs) {
        */
       header('Content-Type: image/png');
       header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $modified) . ' GMT');
-      header('Expires: '. gmdate('D, d M Y H:i:s', time() + $expires_offset) .' GMT');
+      header('Expires: '. gmdate('D, d M Y H:i:s', time() + TRACKFIELD_EXPIRES_OFFSET) .' GMT');
       header('Cache-Control: public, must-revalidate, max-age=0');
       header('HTTP/1.1 304 Not Modified');
       exit();
     } 
   }
-  
+
   /*
    * We're going to have to return an image now.
    * Tell Apache not to compress it again (if we're using Apache).
@@ -281,9 +266,30 @@ function _trackfield_graph($graphargs) {
   if (function_exists('apache_setenv')) {
     apache_setenv('no-gzip', '1');
   }
+  
+  return $modified;
+}
 
-  /* Second best - see if we have this in our cache. */
-  $cache_file = _trackfield_graph_cache_file($graphargs);
+
+/*
+ * This is the main graphing function.
+ */
+
+function _trackfield_graph($graphargs) {
+  /* Load config */
+  $trackfield_format_sizes = variable_get('trackfield_graph_format_sizes', array());
+  $trackfield_format_cols = variable_get('trackfield_graph_format_cols', array());
+  $formatter = $graphargs['formatter'];
+  $config = $trackfield_format_sizes[$formatter];
+  
+  $modified = max(filemtime(__FILE__), $config['timestamp']);
+  $modified = _trackfield_graph_check_modified($graphargs, $modified);
+  
+  /*
+   * If we fell through here then have to return an image for this request - see
+   * if we have this in our cache.
+   */
+  $cache_file = _trackfield_graph_cache_file(TRACKFIELD_GRAPH_CACHE_PATH, $graphargs);
   if (!file_exists($cache_file) ||
       filemtime($cache_file) < $modified) {
     /*
@@ -295,7 +301,7 @@ function _trackfield_graph($graphargs) {
      */
 
     $graphdata = _trackfield_graph_get_graphdata($graphargs);
-    $cache_file = _trackfield_graph_cache_file($graphargs);
+    $cache_file = _trackfield_graph_cache_file(TRACKFIELD_GRAPH_CACHE_PATH, $graphargs);
   }
 
   if (!file_exists($cache_file) ||
@@ -325,8 +331,8 @@ function _trackfield_graph($graphargs) {
     
     /* Do the graphing */
     
-    include_once(drupal_get_path('module', 'trackfield') .'/jpgraph/src/jpgraph.php');
-    include_once(drupal_get_path('module', 'trackfield') .'/jpgraph/src/jpgraph_line.php');
+    require_once('./sites/all/libraries/jpgraph/src/jpgraph.php');
+    require_once('./sites/all/libraries/jpgraph/src/jpgraph_line.php');
 
     /* Are we building big and resampling? */
 
@@ -345,6 +351,7 @@ function _trackfield_graph($graphargs) {
      * AntiAliasing doesn't seem to look so nice
      * $graph->img->SetAntiAliasing();
      */
+	$graph->SetFrame(false);
     $graph->SetMarginColor($trackfield_format_cols[t('background')]['col'][0]);
     $graph->SetColor($trackfield_format_cols[t('background')]['col'][0]);
     /* Round the scale to nearest 10 */
@@ -511,7 +518,7 @@ function _trackfield_graph($graphargs) {
     'Content-Type: image/png',
     'Content-Length: ' . filesize($cache_file),
     'Last-Modified: ' . gmdate('D, d M Y H:i:s', $modified) . ' GMT',
-    'Expires: '. gmdate('D, d M Y H:i:s', time() + $expires_offset) .' GMT',
+    'Expires: '. gmdate('D, d M Y H:i:s', time() + TRACKFIELD_EXPIRES_OFFSET) .' GMT',
     'Cache-Control: public, must-revalidate, max-age=0');
   file_transfer($cache_file, $headers);
 }

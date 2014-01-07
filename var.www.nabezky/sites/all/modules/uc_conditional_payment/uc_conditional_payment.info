@@ -1,0 +1,13 @@
+name = Conditional payments
+description = Integrate Conditional Actions with payment methods so restrictions can be added.
+dependencies[] = uc_payment
+dependencies[] = ca
+package = Ubercart - payment
+core = 6.x
+
+; Information added by drupal.org packaging script on 2013-10-19
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "uc_conditional_payment"
+datestamp = "1382148985"
+

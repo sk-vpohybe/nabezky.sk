@@ -25,6 +25,13 @@ function user_rules_event_info() {
         'account_unchanged' => array('type' => 'user', 'label' => t('unchanged user')),
       ),
     ),
+	'user_update_profile' => array(
+     'label' => t('User profile details have been updated'),
+      'module' => 'User',
+      'arguments' => rules_events_hook_user_arguments(t('updated user')) + array(
+       'account_unchanged' => array('type' => 'user', 'label' => t('unchanged user')),
+     ),
+    ),
     'user_view' => array(
       'label' => t('User page has been viewed'),
       'module' => 'User',

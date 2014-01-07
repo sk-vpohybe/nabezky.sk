@@ -30,7 +30,7 @@ function mollom_requirements($phase = 'runtime', $check = TRUE) {
     $requirements['mollom'] = array(
       'title' => t('Mollom API keys'),
       'value' => t('Valid (public key: @publicKey)', array(
-        '@publicKey' => mollom()->loadConfiguration('publicKey'),
+        '@publicKey' => variable_get('mollom_public_key', ''),
       )),
     );
     // Immediately return if everything is in order.
@@ -50,34 +50,41 @@ function mollom_requirements($phase = 'runtime', $check = TRUE) {
       ));
     }
     // Generate an appropriate error message:
+    // If testing mode is enabled, then the Testing API is most likely down,
+    // since the testing client implementation automatically tries to recover
+    // from stale/outdated API keys.
+    if (variable_get('mollom_testing_mode', 0)) {
+      $requirements['mollom']['value'] = t('Testing API not available');
+      $requirements['mollom']['description'] = t('The Mollom Testing API is not available currently.');
+    }
     // Missing API keys.
-    if (!$status['keys']) {
+    elseif (!$status['keys']) {
       $requirements['mollom']['value'] = t('Not configured');
       $requirements['mollom']['description'] = t('The Mollom API keys are not configured yet. !admin-message', array(
         '!admin-message' => $admin_message,
       ));
     }
     // Bad request: Invalid client system time: Too large offset from UTC.
-    elseif ($status['keys valid'] === Mollom::REQUEST_ERROR) {
+    elseif ($status['response'] === Mollom::REQUEST_ERROR) {
       $requirements['mollom']['value'] = t('Client error');
       $requirements['mollom']['description'] = t('The server time of this site is incorrect. The time of the operating system is not synchronized with the Coordinated Universal Time (UTC), which prevents a successful authentication with Mollom. The maximum allowed offset is @minutes minutes. Please consult your hosting provider or server operator to correct the server time.', array(
         '@minutes' => Mollom::TIME_OFFSET_MAX / 60,
       ));
     }
     // Invalid API keys.
-    elseif ($status['keys valid'] === Mollom::AUTH_ERROR) {
+    elseif ($status['response'] === Mollom::AUTH_ERROR) {
       $requirements['mollom']['value'] = t('Invalid');
       $requirements['mollom']['description'] = t('The configured Mollom API keys are invalid. !admin-message', array(
         '!admin-message' => $admin_message,
       ));
     }
     // Communication error.
-    elseif ($status['keys valid'] === Mollom::NETWORK_ERROR) {
+    elseif ($status['response'] === Mollom::NETWORK_ERROR) {
       $requirements['mollom']['value'] = t('Network error');
       $requirements['mollom']['description'] = t('The Mollom servers could not be contacted. Please make sure that your web server can make outgoing HTTP requests.');
     }
     // Server error.
-    elseif ($status['keys valid'] === Mollom::RESPONSE_ERROR) {
+    elseif ($status['response'] === Mollom::RESPONSE_ERROR) {
       $requirements['mollom']['value'] = t('Service error');
       $requirements['mollom']['description'] = t('The Mollom API keys could not be verified. Please try again later.');
     }
@@ -928,6 +935,35 @@ function mollom_update_6206() {
       'not null' => TRUE,
       'default' => 'captcha',
     ));
+  }
+  return $ret;
+}
+
+/**
+ * Remove 'mollom_status' variable (replaced by cache).
+ */
+function mollom_update_6207() {
+  $ret = array();
+  variable_del('mollom_status');
+  return $ret;
+}
+
+/**
+ * Remove obsolete 'mollom_moderation_redirect' setting.
+ */
+function mollom_update_6208() {
+  $ret = array();
+  variable_del('mollom_moderation_redirect');
+  return $ret;
+}
+
+/**
+ * Disable minimum log severity threshold for existing sites.
+ */
+function mollom_update_6209() {
+  $ret = array();
+  if (variable_get('mollom_log_minimum_severity', NULL) === NULL) {
+    variable_set('mollom_log_minimum_severity', WATCHDOG_INFO);
   }
   return $ret;
 }

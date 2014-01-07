@@ -5,9 +5,9 @@ version = "6.x-0.1-dev"
 dependencies[] = trackfield
 package = Trackfield
 
-; Information added by drupal.org packaging script on 2011-10-15
-version = "6.x-1.x-dev"
+; Information added by  packaging script on 2013-11-06
+version = "6.x-1.0+35-dev"
 core = "6.x"
 project = "trackfield"
-datestamp = "1318638833"
+datestamp = "1383776531"
 
